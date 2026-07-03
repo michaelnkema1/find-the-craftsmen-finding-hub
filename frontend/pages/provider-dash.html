@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Provider Dashboard — Find</title>
+  <meta name="description" content="Manage your handyworker profile, availability, and jobs on the Find platform." />
+  <link rel="stylesheet" href="../assets/css/main.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    body { background: var(--bg); }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; animation: fadeUp .35s ease; }
+    .avail-toggle { display: flex; align-items: center; gap: 1rem; }
+    .toggle-switch { position: relative; width: 48px; height: 26px; }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider { position: absolute; inset: 0; background: var(--surface-3); border-radius: 26px; cursor: pointer; transition: var(--t); }
+    .toggle-slider::before { content: ''; position: absolute; width: 20px; height: 20px; left: 3px; top: 3px; border-radius: 50%; background: white; transition: var(--t); }
+    .toggle-switch input:checked + .toggle-slider { background: var(--success); }
+    .toggle-switch input:checked + .toggle-slider::before { transform: translateX(22px); }
+    .earnings-chart-wrap { height: 200px; position: relative; }
+    .job-row { display: grid; grid-template-columns: 1fr 1fr auto auto; gap: 1rem; align-items: center; padding: .9rem 1rem; border-top: 1px solid var(--border); font-size: .9rem; }
+    .job-row:hover { background: rgba(255,255,255,.02); }
+    .jobs-header { display: grid; grid-template-columns: 1fr 1fr auto auto; gap: 1rem; padding: .7rem 1rem; background: var(--surface-2); border-radius: var(--radius-md) var(--radius-md) 0 0; font-size: .78rem; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--text-muted); }
+  </style>
+</head>
+<body>
+  <div class="dash-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <a href="../index.html" style="background:linear-gradient(135deg,var(--primary),#FBBF24);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Find.</a>
+      </div>
+      <nav class="sidebar-nav">
+        <button class="sidebar-link active" onclick="showPanel('overview', this)"><span class="icon">📊</span>Overview</button>
+        <button class="sidebar-link" onclick="showPanel('jobs', this)"><span class="icon">🗂️</span>My Jobs</button>
+        <button class="sidebar-link" onclick="showPanel('profile', this)"><span class="icon">👤</span>Profile</button>
+      </nav>
+      <div style="border-top:1px solid var(--border); padding-top:1rem; margin-top:auto;">
+        <div id="sb-name" style="font-weight:600; padding:.5rem 1rem;font-size:.9rem;"></div>
+        <div id="sb-avail-row" style="padding:.25rem 1rem; font-size:.82rem; color:var(--text-muted);"></div>
+        <button class="sidebar-link" onclick="Auth.logout()" style="color:var(--error);margin-top:.5rem;"><span class="icon">🚪</span>Logout</button>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="dash-main">
+      <!-- Overview -->
+      <div class="tab-panel active" id="panel-overview">
+        <div class="dash-header">
+          <h2 id="greet-msg">Dashboard</h2>
+          <p id="greet-sub" style="margin-top:.25rem;"></p>
+        </div>
+
+        <!-- Stat cards -->
+        <div class="grid-4 mb-3" id="stat-cards">
+          <div class="stat-card"><div class="stat-icon">💰</div><div><div class="stat-value" id="st-earnings">₵0</div><div class="stat-label">Total Earned</div></div></div>
+          <div class="stat-card"><div class="stat-icon">✅</div><div><div class="stat-value" id="st-jobs">0</div><div class="stat-label">Jobs Completed</div></div></div>
+          <div class="stat-card"><div class="stat-icon">⭐</div><div><div class="stat-value" id="st-rating">—</div><div class="stat-label">Rating</div></div></div>
+          <div class="stat-card"><div class="stat-icon">⏳</div><div><div class="stat-value" id="st-pending">0</div><div class="stat-label">Pending</div></div></div>
+        </div>
+
+        <!-- Availability toggle -->
+        <div class="card mb-3">
+          <div class="flex-between">
+            <div>
+              <h3>Availability Status</h3>
+              <p style="font-size:.85rem;margin-top:.25rem;" id="avail-desc">Loading…</p>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="avail-toggle" onchange="toggleAvailability(this.checked)" />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Earnings chart -->
+        <div class="card">
+          <h3 style="margin-bottom:1.25rem;">Earnings Overview</h3>
+          <div class="earnings-chart-wrap">
+            <canvas id="earnings-chart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Jobs panel -->
+      <div class="tab-panel" id="panel-jobs">
+        <div class="dash-header"><h2>My Jobs</h2></div>
+        <div class="tabs mb-3" style="max-width:380px;">
+          <button class="tab-btn active" onclick="filterJobs('pending', this)">Pending</button>
+          <button class="tab-btn" onclick="filterJobs('in_progress', this)">Active</button>
+          <button class="tab-btn" onclick="filterJobs('completed', this)">Completed</button>
+        </div>
+        <div class="card" style="padding:0;overflow:hidden;">
+          <div class="jobs-header">
+            <span>Client / Service</span><span>Scheduled</span><span>Amount</span><span>Action</span>
+          </div>
+          <div id="jobs-list"></div>
+        </div>
+      </div>
+
+      <!-- Profile panel -->
+      <div class="tab-panel" id="panel-profile">
+        <div class="dash-header"><h2>Edit Profile</h2></div>
+        <div class="card" style="max-width:600px;">
+          <form id="profile-form">
+            <div class="flex-col gap-2">
+              <div class="form-group">
+                <label class="form-label">Display Name</label>
+                <input id="p-name" type="text" class="form-input" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Bio</label>
+                <textarea id="p-bio" class="form-textarea" rows="4"></textarea>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Skills (comma-separated)</label>
+                <input id="p-skills" type="text" class="form-input" placeholder="Plumber,Electrician" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Hourly Rate (₵)</label>
+                <input id="p-rate" type="number" class="form-input" min="0" />
+              </div>
+              <div id="profile-msg" style="display:none;" class="alert"></div>
+              <button type="submit" id="save-btn" class="btn btn-primary">Save Changes</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div id="toast"></div>
+  <script src="../assets/js/config.js"></script>
+  <script src="../assets/js/api.js"></script>
+  <script src="../assets/js/auth.js"></script>
+  <script>
+    Auth.requireAuth();
+    if (!Auth.isProvider()) window.location.href = 'homeowner-dash.html';
+
+    const user = Auth.getUser();
+    let providerData = null;
+    let allJobs = [];
+    let jobFilter = 'pending';
+    let earningsChart = null;
+
+    document.getElementById('sb-name').textContent = user.name;
+    document.getElementById('greet-msg').textContent = `Hello, ${user.name} 👋`;
+
+    function showPanel(name, btn) {
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.sidebar-link').forEach(b => b.classList.remove('active'));
+      document.getElementById('panel-' + name).classList.add('active');
+      btn.classList.add('active');
+    }
+
+    async function loadDashboard() {
+      try {
+        const [providers, bookings] = await Promise.all([
+          api.searchProviders({}),
+          api.listBookings(),
+        ]);
+
+        // Find own provider record
+        providerData = providers.find(p => p.user_id === user.id);
+        allJobs = bookings;
+
+        if (providerData) {
+          // Availability
+          const avail = providerData.availability_status;
+          document.getElementById('avail-toggle').checked = avail;
+          document.getElementById('avail-desc').textContent = avail
+            ? '✅ You are currently visible to homeowners'
+            : '⚫ You are hidden from search results';
+          document.getElementById('sb-avail-row').textContent = avail ? '🟢 Available' : '⚫ Unavailable';
+
+          // Stats
+          const completed = bookings.filter(b => b.status === 'completed');
+          const pending   = bookings.filter(b => b.status === 'pending');
+          const totalEarned = completed.reduce((s,b) => s + (b.total_amount||0), 0);
+          document.getElementById('st-earnings').textContent = `₵${totalEarned.toLocaleString()}`;
+          document.getElementById('st-jobs').textContent = completed.length;
+          document.getElementById('st-rating').textContent = `⭐ ${providerData.rating_avg}`;
+          document.getElementById('st-pending').textContent = pending.length;
+
+          // Profile form
+          document.getElementById('p-name').value = user.name;
+          document.getElementById('p-bio').value = providerData.bio || '';
+          document.getElementById('p-skills').value = providerData.skills || '';
+          document.getElementById('p-rate').value = providerData.hourly_rate || '';
+
+          // Chart
+          buildChart(bookings);
+        }
+
+        renderJobs();
+      } catch (e) {
+        showToast('Failed to load dashboard: ' + e.message, 'error');
+      }
+    }
+
+    function buildChart(bookings) {
+      const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      const now = new Date();
+      const labels = [], data = [];
+      for (let i = 5; i >= 0; i--) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        labels.push(months[d.getMonth()]);
+        const earned = bookings
+          .filter(b => b.status === 'completed' && b.scheduled_at)
+          .filter(b => {
+            const bd = new Date(b.scheduled_at);
+            return bd.getMonth() === d.getMonth() && bd.getFullYear() === d.getFullYear();
+          })
+          .reduce((s,b) => s + (b.total_amount||0), 0);
+        data.push(earned);
+      }
+
+      const ctx = document.getElementById('earnings-chart').getContext('2d');
+      if (earningsChart) earningsChart.destroy();
+      earningsChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [{ label: 'Earnings (₵)', data, backgroundColor: 'rgba(245,158,11,.7)', borderColor: '#F59E0B', borderWidth: 2, borderRadius: 6 }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { grid: { color: 'rgba(255,255,255,.05)' }, ticks: { color: '#94A3B8' } },
+            y: { grid: { color: 'rgba(255,255,255,.05)' }, ticks: { color: '#94A3B8', callback: v => '₵'+v.toLocaleString() } },
+          }
+        }
+      });
+    }
+
+    function filterJobs(status, btn) {
+      jobFilter = status;
+      document.querySelectorAll('#panel-jobs .tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderJobs();
+    }
+
+    function renderJobs() {
+      const filtered = allJobs.filter(b => b.status === jobFilter);
+      const el = document.getElementById('jobs-list');
+      if (!filtered.length) {
+        el.innerHTML = `<div style="text-align:center;padding:2rem;color:var(--text-muted);">No ${jobFilter} jobs.</div>`;
+        return;
+      }
+      el.innerHTML = filtered.map(b => `
+        <div class="job-row">
+          <div>
+            <div style="font-weight:600;">${b.homeowner_name || 'Client'}</div>
+            <div style="font-size:.8rem;color:var(--text-muted);">${b.service_type}</div>
+          </div>
+          <div style="font-size:.85rem;">${fmtDate(b.scheduled_at)}</div>
+          <div style="font-weight:700;color:var(--primary);">₵${(b.total_amount||0).toLocaleString()}</div>
+          <div>
+            ${b.status === 'pending' ? `<button class="btn btn-primary btn-sm" onclick="updateStatus(${b.id},'confirmed')">Confirm</button>` : ''}
+            ${b.status === 'confirmed' ? `<button class="btn btn-primary btn-sm" onclick="updateStatus(${b.id},'in_progress')">Start</button>` : ''}
+            ${b.status === 'in_progress' ? `<button class="btn btn-sm" style="background:var(--success);color:#fff;" onclick="updateStatus(${b.id},'completed')">Complete</button>` : ''}
+            ${b.status === 'completed' ? '<span style="color:var(--success);font-size:.85rem;">✓ Done</span>' : ''}
+          </div>
+        </div>`).join('');
+    }
+
+    async function updateStatus(bookingId, status) {
+      try {
+        await api.updateBookingStatus(bookingId, status);
+        showToast(`Booking marked as ${status}`, 'success');
+        loadDashboard();
+      } catch (e) { showToast(e.message, 'error'); }
+    }
+
+    async function toggleAvailability(checked) {
+      if (!providerData) return;
+      try {
+        await api.updateProvider(providerData.id, { availability_status: checked });
+        document.getElementById('avail-desc').textContent = checked
+          ? '✅ You are currently visible to homeowners'
+          : '⚫ You are hidden from search results';
+        document.getElementById('sb-avail-row').textContent = checked ? '🟢 Available' : '⚫ Unavailable';
+        showToast(checked ? 'You are now available' : 'You are now unavailable', 'info');
+      } catch (e) { showToast(e.message, 'error'); }
+    }
+
+    document.getElementById('profile-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('save-btn');
+      const msg = document.getElementById('profile-msg');
+      btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Saving…';
+      try {
+        await api.updateProvider(providerData.id, {
+          bio: document.getElementById('p-bio').value,
+          skills: document.getElementById('p-skills').value,
+          hourly_rate: parseFloat(document.getElementById('p-rate').value) || null,
+        });
+        await api.updateMe({ name: document.getElementById('p-name').value });
+        msg.className = 'alert alert-success';
+        msg.textContent = '✅ Profile updated successfully.';
+        msg.style.display = 'flex';
+        showToast('Profile saved!', 'success');
+      } catch (er) {
+        msg.className = 'alert alert-error';
+        msg.textContent = er.message || 'Save failed.';
+        msg.style.display = 'flex';
+      }
+      btn.disabled = false; btn.textContent = 'Save Changes';
+    });
+
+    loadDashboard();
+  </script>
+</body>
+</html>

@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Register — Find</title>
+  <meta name="description" content="Join Find as a homeowner or skilled handyworker. Free to register." />
+  <link rel="stylesheet" href="../assets/css/main.css" />
+  <style>
+    body { display:flex; align-items:center; justify-content:center; min-height:100vh; padding:2rem 1rem; }
+    .auth-card { width:100%; max-width:520px; }
+    .auth-logo { font-size:2rem; font-weight:700; background:linear-gradient(135deg,var(--primary),#FBBF24); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; display:block; margin-bottom:.5rem; }
+    .role-picker { display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1.5rem; }
+    .role-option { border:2px solid var(--border); border-radius:var(--radius-md); padding:1.25rem; text-align:center; cursor:pointer; transition:var(--t); }
+    .role-option:hover { border-color:var(--border-amber); }
+    .role-option.selected { border-color:var(--primary); background:rgba(245,158,11,.08); }
+    .role-option .role-icon { font-size:1.75rem; margin-bottom:.5rem; }
+    .role-option .role-name { font-weight:600; font-size:.95rem; }
+    .role-option .role-desc { font-size:.78rem; color:var(--text-muted); margin-top:.25rem; }
+
+    /* Location picker */
+    .loc-tabs { display:grid; grid-template-columns:1fr 1fr; gap:.5rem; margin-bottom:1rem; }
+    .loc-tab { padding:.65rem; border:1px solid var(--border); border-radius:var(--radius-md); background:transparent; color:var(--text-muted); font-size:.85rem; font-weight:600; cursor:pointer; transition:var(--t); text-align:center; }
+    .loc-tab:hover { border-color:var(--border-amber); color:var(--text); }
+    .loc-tab.active { border-color:var(--primary); background:rgba(245,158,11,.08); color:var(--primary); }
+    .loc-panel { display:none; }
+    .loc-panel.active { display:block; animation:fadeUp .3s ease; }
+    .gps-capture-btn { width:100%; padding:.75rem; border:1.5px dashed var(--border-amber); border-radius:var(--radius-md); background:rgba(245,158,11,.04); color:var(--primary); font-weight:600; font-size:.9rem; cursor:pointer; transition:var(--t); display:flex; align-items:center; justify-content:center; gap:.5rem; }
+    .gps-capture-btn:hover { background:rgba(245,158,11,.1); }
+    .gps-capture-btn:disabled { opacity:.5; cursor:not-allowed; }
+    .loc-result { margin-top:.75rem; padding:.6rem .9rem; border-radius:var(--radius-md); font-size:.82rem; display:flex; align-items:flex-start; gap:.5rem; }
+    .loc-result.success { background:rgba(16,185,129,.1); border:1px solid rgba(16,185,129,.25); color:#10B981; }
+    .loc-result.error   { background:rgba(239,68,68,.1);  border:1px solid rgba(239,68,68,.25);  color:#EF4444; }
+    .addr-row { display:flex; gap:.5rem; }
+    .addr-row input { flex:1; }
+    .addr-row button { flex-shrink:0; }
+  </style>
+</head>
+<body>
+  <div class="hero-bg" style="position:fixed;inset:0;z-index:0;"></div>
+  <div class="auth-card card fade-up" style="position:relative;z-index:1;">
+    <div style="text-align:center; margin-bottom:2rem;">
+      <a href="../index.html" class="auth-logo">Find.</a>
+      <h2>Create your account</h2>
+      <p style="margin-top:.5rem;">Join the Find skilled labour marketplace</p>
+    </div>
+
+    <!-- Role picker -->
+    <div class="role-picker" id="role-picker">
+      <div class="role-option selected" id="role-homeowner" onclick="selectRole('homeowner')">
+        <div class="role-icon">🏠</div>
+        <div class="role-name">Homeowner</div>
+        <div class="role-desc">I need skilled workers</div>
+      </div>
+      <div class="role-option" id="role-provider" onclick="selectRole('provider')">
+        <div class="role-icon">🔧</div>
+        <div class="role-name">Provider</div>
+        <div class="role-desc">I offer skilled services</div>
+      </div>
+    </div>
+
+    <form id="register-form">
+      <div class="flex-col gap-2">
+        <div class="form-group">
+          <label class="form-label">Full Name</label>
+          <input id="name" type="text" class="form-input" placeholder="Your full name" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email address</label>
+          <input id="email" type="email" class="form-input" placeholder="you@example.com" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input id="password" type="password" class="form-input" placeholder="Min. 6 characters" minlength="6" required />
+        </div>
+
+        <!-- ── Location picker ──────────────────────────────── -->
+        <div class="form-group">
+          <label class="form-label">Home Location <span style="color:var(--text-subtle);font-weight:400;">(optional)</span></label>
+          <div class="loc-tabs">
+            <button type="button" class="loc-tab active" id="tab-gps"    onclick="switchLocMode('gps')">📍 Use My GPS</button>
+            <button type="button" class="loc-tab"        id="tab-manual" onclick="switchLocMode('manual')">✏️ Enter Address</button>
+          </div>
+
+          <!-- GPS panel -->
+          <div class="loc-panel active" id="panel-gps">
+            <button type="button" class="gps-capture-btn" id="gps-btn" onclick="captureGPS()">
+              📡 Detect My Current Location
+            </button>
+            <div id="gps-result" style="display:none;" class="loc-result success">
+              <span>📍</span><span id="gps-text"></span>
+            </div>
+          </div>
+
+          <!-- Manual address panel -->
+          <div class="loc-panel" id="panel-manual">
+            <div class="addr-row">
+              <input type="text" id="address-input" class="form-input"
+                placeholder="e.g. 15 Ring Road, Accra" />
+              <button type="button" class="btn btn-secondary btn-sm" id="geocode-btn" onclick="geocodeAddress()">
+                🔍 Find
+              </button>
+            </div>
+            <div id="geocode-result" style="display:none;" class="loc-result mt-1"></div>
+          </div>
+        </div>
+        <!-- ─────────────────────────────────────────────────── -->
+
+        <div id="register-error" class="alert alert-error" style="display:none;"></div>
+        <button type="submit" id="submit-btn" class="btn btn-primary" style="width:100%;margin-top:.5rem;">
+          Create Account
+        </button>
+      </div>
+    </form>
+
+    <p style="text-align:center; margin-top:1.5rem; font-size:.9rem;">
+      Already have an account? <a href="login.html" style="color:var(--primary);font-weight:600;">Login</a>
+    </p>
+  </div>
+
+  <div id="toast"></div>
+  <script src="../assets/js/config.js"></script>
+  <script src="../assets/js/api.js"></script>
+  <script src="../assets/js/auth.js"></script>
+  <script>
+    let selectedRole = 'homeowner';
+    let locMode = 'gps';
+    let capturedLat = null, capturedLng = null, capturedAddress = null;
+
+    // Pre-select from URL param
+    const urlRole = new URLSearchParams(location.search).get('role');
+    if (urlRole === 'provider') selectRole('provider');
+
+    function selectRole(role) {
+      selectedRole = role;
+      document.getElementById('role-homeowner').classList.toggle('selected', role === 'homeowner');
+      document.getElementById('role-provider').classList.toggle('selected', role === 'provider');
+    }
+
+    function switchLocMode(mode) {
+      locMode = mode;
+      document.getElementById('tab-gps').classList.toggle('active', mode === 'gps');
+      document.getElementById('tab-manual').classList.toggle('active', mode === 'manual');
+      document.getElementById('panel-gps').classList.toggle('active', mode === 'gps');
+      document.getElementById('panel-manual').classList.toggle('active', mode === 'manual');
+      // Clear the other panel's captured data
+      if (mode === 'gps') { capturedAddress = null; }
+      else { capturedLat = null; capturedLng = null; document.getElementById('gps-result').style.display = 'none'; }
+    }
+
+    // ── GPS capture ────────────────────────────────────────────────────────────
+    function captureGPS() {
+      if (!navigator.geolocation) {
+        showGPSResult('error', 'Geolocation not supported by your browser.');
+        return;
+      }
+      const btn = document.getElementById('gps-btn');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span> Locating…';
+
+      navigator.geolocation.getCurrentPosition(
+        async (pos) => {
+          capturedLat = pos.coords.latitude;
+          capturedLng = pos.coords.longitude;
+          const acc = pos.coords.accuracy ? ` (±${Math.round(pos.coords.accuracy)}m)` : '';
+
+          // Reverse-geocode to get a human-readable address
+          try {
+            const res = await fetch(
+              `https://nominatim.openstreetmap.org/reverse?lat=${capturedLat}&lon=${capturedLng}&format=json`,
+              { headers: { 'Accept-Language': 'en' } }
+            );
+            const data = await res.json();
+            capturedAddress = data.display_name || null;
+            showGPSResult('success', `${capturedAddress || `${capturedLat.toFixed(5)}, ${capturedLng.toFixed(5)}`}${acc}`);
+          } catch {
+            capturedAddress = null;
+            showGPSResult('success', `${capturedLat.toFixed(5)}, ${capturedLng.toFixed(5)}${acc}`);
+          }
+          btn.disabled = false;
+          btn.innerHTML = '✅ Location Captured — Click to Re-detect';
+        },
+        (err) => {
+          const msgs = { 1: 'Permission denied — please allow location access.', 2: 'Location unavailable.', 3: 'Timed out.' };
+          showGPSResult('error', msgs[err.code] || 'Failed to get location.');
+          btn.disabled = false;
+          btn.innerHTML = '📡 Detect My Current Location';
+        },
+        { enableHighAccuracy: true, timeout: 10000 }
+      );
+    }
+
+    function showGPSResult(type, text) {
+      const el = document.getElementById('gps-result');
+      const textEl = document.getElementById('gps-text');
+      el.className = `loc-result ${type}`;
+      textEl.textContent = text;
+      el.style.display = 'flex';
+    }
+
+    // ── Manual address geocode ─────────────────────────────────────────────────
+    async function geocodeAddress() {
+      const input = document.getElementById('address-input').value.trim();
+      const resultEl = document.getElementById('geocode-result');
+      const btn = document.getElementById('geocode-btn');
+      if (!input) return;
+
+      btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>';
+      resultEl.style.display = 'none';
+
+      try {
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(input)}&format=json&limit=1`,
+          { headers: { 'Accept-Language': 'en' } }
+        );
+        const data = await res.json();
+        if (!data.length) throw new Error('Address not found. Try being more specific.');
+
+        capturedLat = parseFloat(data[0].lat);
+        capturedLng = parseFloat(data[0].lon);
+        capturedAddress = data[0].display_name;
+
+        resultEl.className = 'loc-result success mt-1';
+        resultEl.innerHTML = `<span>✅</span><span>${capturedAddress}</span>`;
+        resultEl.style.display = 'flex';
+      } catch (e) {
+        capturedLat = null; capturedLng = null; capturedAddress = null;
+        resultEl.className = 'loc-result error mt-1';
+        resultEl.innerHTML = `<span>❌</span><span>${e.message}</span>`;
+        resultEl.style.display = 'flex';
+      }
+      btn.disabled = false; btn.innerHTML = '🔍 Find';
+    }
+
+    // Allow Enter key to trigger geocode in address field
+    document.getElementById('address-input').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); geocodeAddress(); }
+    });
+
+    // ── Form submit ────────────────────────────────────────────────────────────
+    document.getElementById('register-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('submit-btn');
+      const errEl = document.getElementById('register-error');
+      errEl.style.display = 'none';
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span> Creating account…';
+
+      const payload = {
+        email: document.getElementById('email').value,
+        password: document.getElementById('password').value,
+        name: document.getElementById('name').value,
+        role: selectedRole,
+        address: capturedAddress || (locMode === 'manual' ? document.getElementById('address-input').value.trim() || null : null),
+        location_lat: capturedLat,
+        location_lng: capturedLng,
+      };
+
+      try {
+        const data = await api.register(payload);
+        Auth.save(data.access_token, data.user);
+        showToast('Account created! Welcome to Find 🎉', 'success');
+        setTimeout(() => {
+          window.location.href = selectedRole === 'provider'
+            ? 'provider-dash.html'
+            : 'search.html';
+        }, 900);
+      } catch (err) {
+        errEl.textContent = err.message || 'Registration failed. Please try again.';
+        errEl.style.display = 'flex';
+        btn.disabled = false;
+        btn.textContent = 'Create Account';
+      }
+    });
+  </script>
+</body>
+</html>

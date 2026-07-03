@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Bookings — Find</title>
+  <meta name="description" content="Manage your service bookings and leave reviews on the Find platform." />
+  <link rel="stylesheet" href="../assets/css/main.css" />
+  <style>
+    body { padding-top: 72px; }
+    .page-hero { background: linear-gradient(135deg, rgba(245,158,11,.1), transparent); border-bottom: 1px solid var(--border); padding: 2rem 0; margin-bottom: 2rem; }
+    .booking-card-item { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.5rem; transition: var(--t); margin-bottom: 1rem; }
+    .booking-card-item:hover { border-color: var(--border-amber); }
+    .booking-top { display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 1rem; }
+    .timeline { display: flex; gap: .5rem; align-items: center; margin-top: 1rem; flex-wrap: wrap; font-size: .8rem; color: var(--text-muted); }
+    .review-modal .star-btn { font-size: 2rem; cursor: pointer; color: var(--text-subtle); background: none; border: none; transition: var(--t); }
+    .review-modal .star-btn.active { color: var(--primary); }
+    .empty-state { text-align: center; padding: 4rem 1rem; color: var(--text-muted); }
+    .empty-state .icon { font-size: 3rem; margin-bottom: 1rem; }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <a href="../index.html" class="nav-logo">Find.</a>
+    <div class="nav-links">
+      <a href="search.html">Find Workers</a>
+    </div>
+    <div class="nav-actions">
+      <span id="nav-user" style="display:none; font-weight:600; color:var(--primary);"></span>
+      <a id="nav-login" href="login.html" class="btn btn-secondary btn-sm">Login</a>
+      <button id="nav-logout" class="btn btn-ghost btn-sm" style="display:none;">Logout</button>
+    </div>
+  </nav>
+
+  <div class="page-hero">
+    <div class="container">
+      <h1 style="font-size:1.75rem;">My Bookings</h1>
+      <p style="margin-top:.25rem;" id="welcome-msg"></p>
+    </div>
+  </div>
+
+  <div class="container" style="padding-bottom:3rem;">
+    <!-- Stats row -->
+    <div class="grid-4 mb-3" id="stats-row">
+      <div class="stat-card"><div class="stat-icon">📋</div><div><div class="stat-value" id="st-total">—</div><div class="stat-label">Total Bookings</div></div></div>
+      <div class="stat-card"><div class="stat-icon">⏳</div><div><div class="stat-value" id="st-pending">—</div><div class="stat-label">Pending</div></div></div>
+      <div class="stat-card"><div class="stat-icon">✅</div><div><div class="stat-value" id="st-done">—</div><div class="stat-label">Completed</div></div></div>
+      <div class="stat-card"><div class="stat-icon">⭐</div><div><div class="stat-value" id="st-reviews">—</div><div class="stat-label">Reviews Given</div></div></div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs mb-3" style="max-width:420px;">
+      <button class="tab-btn active" onclick="filterTab('all', this)">All</button>
+      <button class="tab-btn" onclick="filterTab('active', this)">Active</button>
+      <button class="tab-btn" onclick="filterTab('completed', this)">Completed</button>
+    </div>
+
+    <div id="bookings-list">
+      <div style="display:flex;justify-content:center;padding:3rem;"><div class="spinner"></div></div>
+    </div>
+  </div>
+
+  <!-- Review modal -->
+  <div class="modal-overlay" id="review-modal">
+    <div class="modal review-modal">
+      <div class="modal-header">
+        <h3>Leave a Review</h3>
+        <button class="modal-close" onclick="closeReviewModal()">×</button>
+      </div>
+      <p style="margin-bottom:1rem;">How was your experience with <strong id="review-provider-name"></strong>?</p>
+      <div class="flex gap-1 mb-2" id="star-picker">
+        <button class="star-btn" data-val="1">★</button>
+        <button class="star-btn" data-val="2">★</button>
+        <button class="star-btn" data-val="3">★</button>
+        <button class="star-btn" data-val="4">★</button>
+        <button class="star-btn" data-val="5">★</button>
+      </div>
+      <textarea id="review-text" class="form-textarea" placeholder="Tell others about your experience…"></textarea>
+      <div id="review-error" class="alert alert-error mt-2" style="display:none;"></div>
+      <button id="submit-review-btn" class="btn btn-primary mt-3" style="width:100%;" onclick="submitReview()">Submit Review</button>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+  <script src="../assets/js/config.js"></script>
+  <script src="../assets/js/api.js"></script>
+  <script src="../assets/js/auth.js"></script>
+  <script>
+    Auth.requireAuth();
+    if (!Auth.isHomeowner()) window.location.href = 'provider-dash.html';
+
+    const user = Auth.getUser();
+    document.getElementById('welcome-msg').textContent = `Welcome back, ${user.name}`;
+    document.getElementById('nav-user').textContent = user.name;
+    document.getElementById('nav-user').style.display = 'block';
+
+    let allBookings = [];
+    let activeFilter = 'all';
+    let reviewingBooking = null;
+    let selectedRating = 0;
+
+    async function loadBookings() {
+      try {
+        allBookings = await api.listBookings();
+        const completed = allBookings.filter(b => b.status === 'completed');
+        const pending = allBookings.filter(b => ['pending','confirmed','in_progress'].includes(b.status));
+        document.getElementById('st-total').textContent = allBookings.length;
+        document.getElementById('st-pending').textContent = pending.length;
+        document.getElementById('st-done').textContent = completed.length;
+        document.getElementById('st-reviews').textContent = '—';
+        renderBookings();
+      } catch (e) {
+        showToast('Failed to load bookings: ' + e.message, 'error');
+      }
+    }
+
+    function filterTab(f, btn) {
+      activeFilter = f;
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderBookings();
+    }
+
+    function renderBookings() {
+      let items = allBookings;
+      if (activeFilter === 'active') items = items.filter(b => ['pending','confirmed','in_progress'].includes(b.status));
+      if (activeFilter === 'completed') items = items.filter(b => b.status === 'completed');
+
+      const el = document.getElementById('bookings-list');
+      if (!items.length) {
+        el.innerHTML = `<div class="empty-state"><div class="icon">📭</div><p>No bookings found.</p><a href="search.html" class="btn btn-primary mt-3">Find a Worker</a></div>`;
+        return;
+      }
+      el.innerHTML = items.map(b => `
+        <div class="booking-card-item">
+          <div class="booking-top">
+            <div>
+              <div class="flex gap-2" style="align-items:center;flex-wrap:wrap;">
+                <h3 style="font-size:1rem;">${b.service_type}</h3>
+                ${statusBadge(b.status)}
+              </div>
+              <div style="font-size:.85rem;color:var(--text-muted);margin-top:.3rem;">
+                Provider: <strong style="color:var(--text);">${b.provider_name || 'Unknown'}</strong>
+              </div>
+              ${b.description ? `<p style="font-size:.85rem;margin-top:.5rem;">${b.description}</p>` : ''}
+            </div>
+            <div style="text-align:right;">
+              <div style="font-size:.78rem;color:var(--text-muted);">Scheduled</div>
+              <div style="font-weight:600;">${fmtDate(b.scheduled_at)}</div>
+              ${b.total_amount ? `<div style="color:var(--primary);font-weight:700;margin-top:.35rem;">₵${b.total_amount.toLocaleString()}</div>` : ''}
+            </div>
+          </div>
+          <div class="timeline">
+            <span>#FIND-${String(b.id).padStart(5,'0')}</span>
+            <span>·</span>
+            <span>${b.estimated_hours ? b.estimated_hours + 'h estimated' : ''}</span>
+            <span>·</span>
+            <span>Booked ${fmtDate(b.created_at)}</span>
+          </div>
+          <div class="flex gap-2 mt-2" style="flex-wrap:wrap;">
+            <a href="provider.html?id=${b.provider_id}" class="btn btn-secondary btn-sm">View Provider</a>
+            ${b.status === 'completed' ? `<button class="btn btn-primary btn-sm" onclick="openReviewModal(${b.id}, ${b.provider_id}, '${b.provider_name}')">⭐ Leave Review</button>` : ''}
+          </div>
+        </div>`).join('');
+    }
+
+    function openReviewModal(bookingId, providerId, provName) {
+      reviewingBooking = { bookingId, providerId };
+      selectedRating = 0;
+      document.getElementById('review-provider-name').textContent = provName;
+      document.getElementById('review-text').value = '';
+      document.getElementById('review-error').style.display = 'none';
+      document.querySelectorAll('.star-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('review-modal').classList.add('open');
+    }
+    function closeReviewModal() { document.getElementById('review-modal').classList.remove('open'); }
+
+    document.querySelectorAll('.star-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        selectedRating = parseInt(btn.dataset.val);
+        document.querySelectorAll('.star-btn').forEach((b,i) => {
+          b.classList.toggle('active', i < selectedRating);
+        });
+      });
+    });
+
+    async function submitReview() {
+      const errEl = document.getElementById('review-error');
+      errEl.style.display = 'none';
+      if (!selectedRating) { errEl.textContent = 'Please select a star rating.'; errEl.style.display = 'flex'; return; }
+      const btn = document.getElementById('submit-review-btn');
+      btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Submitting…';
+      try {
+        await api.createReview({
+          booking_id: reviewingBooking.bookingId,
+          provider_id: reviewingBooking.providerId,
+          rating: selectedRating,
+          text: document.getElementById('review-text').value,
+        });
+        closeReviewModal();
+        showToast('Review submitted! Thank you ⭐', 'success');
+        loadBookings();
+      } catch (e) {
+        errEl.textContent = e.message || 'Failed to submit review.';
+        errEl.style.display = 'flex';
+        btn.disabled = false; btn.textContent = 'Submit Review';
+      }
+    }
+
+    loadBookings();
+  </script>
+</body>
+</html>

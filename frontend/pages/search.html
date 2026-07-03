@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Find Workers — Find</title>
+  <meta name="description" content="Search verified skilled handyworkers near your location on a live map." />
+  <link rel="stylesheet" href="../assets/css/main.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    body { padding-top: 72px; }
+    .search-layout { display: grid; grid-template-columns: 300px 1fr; gap: 0; height: calc(100vh - 72px); }
+    .search-sidebar { background: var(--surface); border-right: 1px solid var(--border); padding: 1.25rem; overflow-y: auto; display: flex; flex-direction: column; gap: 1.25rem; }
+    .search-sidebar h3 { font-size: 1rem; }
+    .filter-section { border-bottom: 1px solid var(--border); padding-bottom: 1.25rem; }
+    .skill-chips { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .75rem; }
+    .chip { padding: .35rem .85rem; border-radius: var(--radius-full); font-size: .8rem; font-weight: 500; cursor: pointer; border: 1px solid var(--border); color: var(--text-muted); background: transparent; transition: var(--t); }
+    .chip.active { background: rgba(245,158,11,.12); border-color: var(--border-amber); color: var(--primary); }
+    .search-right { display: flex; flex-direction: column; overflow: hidden; }
+    .map-container { flex: 1; min-height: 400px; position: relative; }
+    #map { height: 100%; width: 100%; }
+    .results-panel { height: 320px; overflow-y: auto; padding: 1.25rem; background: var(--bg); border-top: 1px solid var(--border); }
+    .results-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+    .results-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1rem; }
+    .map-pin-label { background: var(--surface); border: 1px solid var(--border-amber); color: var(--primary); padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: 700; white-space: nowrap; }
+    .loading-overlay { display: flex; align-items: center; justify-content: center; height: 200px; }
+    @media (max-width: 900px) { .search-layout { grid-template-columns: 1fr; height: auto; } .results-panel { height: auto; } }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <a href="../index.html" class="nav-logo">Find.</a>
+    <div class="nav-links">
+      <a href="search.html">Search</a>
+    </div>
+    <div class="nav-actions">
+      <span id="nav-user" style="display:none; font-weight:600; color:var(--primary);"></span>
+      <a id="nav-dash" href="#" class="btn btn-ghost btn-sm" style="display:none;">Dashboard</a>
+      <a id="nav-login" href="login.html" class="btn btn-secondary btn-sm">Login</a>
+      <button id="nav-logout" class="btn btn-ghost btn-sm" style="display:none;">Logout</button>
+    </div>
+  </nav>
+
+  <div class="search-layout">
+    <!-- Sidebar filters -->
+    <div class="search-sidebar">
+      <div>
+        <h3>🔍 Find Workers</h3>
+        <p style="font-size:.85rem; margin-top:.3rem;" id="gps-status">Locating you…</p>
+      </div>
+
+      <div class="filter-section">
+        <label class="form-label">Service Type</label>
+        <div class="skill-chips" id="skill-chips">
+          <span class="chip active" data-skill="">All</span>
+          <span class="chip" data-skill="Plumber">Plumber</span>
+          <span class="chip" data-skill="Electrician">Electrician</span>
+          <span class="chip" data-skill="Cleaner">Cleaner</span>
+          <span class="chip" data-skill="Carpenter">Carpenter</span>
+          <span class="chip" data-skill="Painter">Painter</span>
+          <span class="chip" data-skill="Laundry">Laundry</span>
+          <span class="chip" data-skill="HVAC">HVAC</span>
+          <span class="chip" data-skill="Landscaping">Landscaping</span>
+        </div>
+      </div>
+
+      <div class="filter-section">
+        <label class="form-label">Search Radius: <span id="radius-val">25</span> km</label>
+        <input type="range" id="radius-slider" min="1" max="100" value="25" style="margin-top:.75rem;" />
+      </div>
+
+      <div class="filter-section">
+        <label class="form-label" style="display:flex; align-items:center; gap:.75rem; cursor:pointer;">
+          <input type="checkbox" id="avail-toggle" style="width:18px;height:18px;accent-color:var(--primary);" />
+          Available now only
+        </label>
+      </div>
+
+      <button id="search-btn" class="btn btn-primary" style="width:100%;" disabled>🔍 Search</button>
+      <div id="result-count" style="font-size:.85rem; color:var(--text-muted); text-align:center;"></div>
+    </div>
+
+    <!-- Map + results -->
+    <div class="search-right">
+      <div class="map-container">
+        <!-- GPS loading overlay -->
+        <div id="gps-overlay" style="position:absolute;inset:0;z-index:999;background:rgba(6,11,24,.85);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1rem;border-radius:var(--radius-lg);">
+          <div class="spinner" style="width:36px;height:36px;border-width:4px;"></div>
+          <p style="font-size:.95rem;font-weight:600;">📍 Getting your location…</p>
+          <p style="font-size:.8rem;color:var(--text-muted);">Please allow location access when prompted</p>
+        </div>
+        <div id="map"></div>
+        <!-- Re-center button -->
+        <button id="recenter-btn" onclick="recenterMap()" title="Re-center on my location" style="position:absolute;bottom:1rem;right:1rem;z-index:500;width:40px;height:40px;border-radius:50%;background:var(--surface);border:1px solid var(--border-amber);color:var(--primary);font-size:1.1rem;cursor:pointer;display:none;box-shadow:var(--shadow-md);">📍</button>
+      </div>
+      <div class="results-panel">
+        <div class="results-header">
+          <h3 id="results-title">Nearby Workers</h3>
+        </div>
+        <div id="results-grid" class="results-grid">
+          <div class="loading-overlay" style="grid-column:1/-1;">
+            <div class="flex-col gap-2" style="text-align:center;">
+              <div class="spinner" style="margin:0 auto;"></div>
+              <p style="font-size:.9rem;">Waiting for your location…</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+  <script src="../assets/js/config.js"></script>
+  <script src="../assets/js/api.js"></script>
+  <script src="../assets/js/auth.js"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    // Accra, Ghana fallback (matches GHS currency)
+    const DEFAULT_LAT = 5.6037, DEFAULT_LNG = -0.1870;
+    let userLat = DEFAULT_LAT, userLng = DEFAULT_LNG;
+    let userMarker = null;
+    let map, markers = [];
+    let providers = [];
+    let selectedSkill = '';
+
+    // Pre-select skill from URL
+    const urlSkill = new URLSearchParams(location.search).get('skill') || '';
+    if (urlSkill) selectedSkill = urlSkill;
+
+    // ── Map ────────────────────────────────────────────────────────────────────
+    function initMap(lat, lng) {
+      map = L.map('map').setView([lat, lng], 13);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+      }).addTo(map);
+      placeUserMarker(lat, lng);
+    }
+
+    function placeUserMarker(lat, lng) {
+      if (userMarker) map.removeLayer(userMarker);
+      userMarker = L.circleMarker([lat, lng], {
+        radius: 11, color: '#F59E0B', fillColor: '#F59E0B',
+        fillOpacity: 0.55, weight: 3
+      }).addTo(map).bindPopup('<b>📍 Your Location</b>');
+    }
+
+    function recenterMap() {
+      if (!map) return;
+      map.setView([userLat, userLng], 13);
+      placeUserMarker(userLat, userLng);
+    }
+
+    function clearMarkers() { markers.forEach(m => map.removeLayer(m)); markers = []; }
+
+    function addProviderMarker(p) {
+      if (!p.location_lat || !p.location_lng) return;
+      const icon = L.divIcon({
+        html: `<div class="map-pin-label">₵${p.hourly_rate?.toLocaleString() || '?'}/hr</div>`,
+        className: '', iconAnchor: [30, 10]
+      });
+      const m = L.marker([p.location_lat, p.location_lng], { icon }).addTo(map);
+      m.bindPopup(`
+        <div style="min-width:180px;">
+          <div style="font-weight:700;font-size:.95rem;">${p.name}</div>
+          <div style="font-size:.8rem;color:#94A3B8;margin:.3rem 0;">${p.skills || ''}</div>
+          <div style="display:flex;align-items:center;gap:.4rem;font-size:.85rem;">
+            <span style="color:#F59E0B;">★</span>${p.rating_avg} (${p.total_reviews} reviews)
+          </div>
+          ${p.distance_km != null ? `<div style="font-size:.78rem;color:#94A3B8;margin-top:.3rem;">📍 ${p.distance_km} km away</div>` : ''}
+          <a href="provider.html?id=${p.id}" style="display:inline-block;margin-top:.75rem;padding:.35rem .75rem;background:#F59E0B;color:#000;border-radius:9999px;font-size:.8rem;font-weight:700;">View Profile</a>
+        </div>
+      `);
+      markers.push(m);
+    }
+
+    // ── Provider cards ─────────────────────────────────────────────────────────
+    function renderCard(p) {
+      const dist = p.distance_km != null
+        ? `<span style="color:var(--text-muted);font-size:.8rem;">📍 ${p.distance_km} km away</span>` : '';
+      return `
+        <div class="provider-card">
+          <div class="flex gap-2 mb-2">
+            <div class="provider-avatar">${avatarInitials(p.name)}</div>
+            <div style="flex:1;">
+              <div class="flex gap-1" style="align-items:center;flex-wrap:wrap;">
+                <span style="font-weight:700;">${p.name}</span>
+                ${p.is_verified ? '<span class="verified-badge">✓ Verified</span>' : ''}
+              </div>
+              <div class="rating-row mt-1">
+                <div class="stars">${renderStars(p.rating_avg)}</div>
+                <span class="rating-value">${p.rating_avg}</span>
+                <span class="rating-count">(${p.total_reviews})</span>
+              </div>
+            </div>
+          </div>
+          <div class="flex gap-1" style="flex-wrap:wrap; margin-bottom:.75rem;">${skillTags(p.skills || '')}</div>
+          <div class="flex-between mt-2">
+            ${dist}
+            <span style="font-weight:700;color:var(--primary);">₵${(p.hourly_rate||0).toLocaleString()}/hr</span>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-top:.85rem;">
+            <a href="provider.html?id=${p.id}" class="btn btn-secondary btn-sm" style="text-align:center;">View Profile</a>
+            <a href="booking.html?provider=${p.id}" class="btn btn-primary btn-sm" style="text-align:center;">Book Now</a>
+          </div>
+        </div>`;
+    }
+
+    // ── Search ─────────────────────────────────────────────────────────────────
+    async function doSearch() {
+      const btn = document.getElementById('search-btn');
+      btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Searching…';
+
+      const params = {
+        lat: userLat, lng: userLng,
+        radius_km: document.getElementById('radius-slider').value,
+        available_only: document.getElementById('avail-toggle').checked,
+      };
+      if (selectedSkill) params.skill = selectedSkill;
+
+      try {
+        providers = await api.searchProviders(params);
+        clearMarkers();
+
+        const grid = document.getElementById('results-grid');
+        const title = document.getElementById('results-title');
+        const countEl = document.getElementById('result-count');
+
+        if (!providers.length) {
+          grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:2rem;color:var(--text-muted);">No workers found in this area. Try a wider radius or different service.</div>`;
+          title.textContent = '0 workers found';
+          countEl.textContent = '';
+        } else {
+          title.textContent = `${providers.length} worker${providers.length !== 1 ? 's' : ''} found`;
+          countEl.textContent = `within ${params.radius_km} km`;
+          grid.innerHTML = providers.map(renderCard).join('');
+          providers.forEach(addProviderMarker);
+          // Fit map to show all providers + user
+          const allLats = [userLat, ...providers.filter(p => p.location_lat).map(p => p.location_lat)];
+          const allLngs = [userLng, ...providers.filter(p => p.location_lng).map(p => p.location_lng)];
+          map.fitBounds([[Math.min(...allLats), Math.min(...allLngs)], [Math.max(...allLats), Math.max(...allLngs)]], { padding: [40, 40] });
+        }
+      } catch (e) {
+        showToast('Search failed: ' + e.message, 'error');
+      }
+
+      btn.disabled = false; btn.textContent = '🔍 Search';
+    }
+
+    // ── GPS Boot (waits for location BEFORE map init) ──────────────────────────
+    function onLocationSuccess(pos) {
+      userLat = pos.coords.latitude;
+      userLng = pos.coords.longitude;
+      const acc = pos.coords.accuracy ? Math.round(pos.coords.accuracy) + 'm accuracy' : '';
+      document.getElementById('gps-status').innerHTML =
+        `<span style="color:var(--success);">📍 Live GPS</span>${acc ? ' · ' + acc : ''}`;
+      boot();
+    }
+
+    function onLocationError(err) {
+      const msgs = { 1: 'Location access denied', 2: 'Location unavailable', 3: 'Location timed out' };
+      document.getElementById('gps-status').innerHTML =
+        `<span style="color:var(--text-muted);">📍 ${msgs[err?.code] || 'Using default area'}</span>`;
+      showToast('Using Accra, Ghana as default location', 'info');
+      boot();
+    }
+
+    function boot() {
+      document.getElementById('gps-overlay').style.display = 'none';
+      document.getElementById('recenter-btn').style.display = 'block';
+      document.getElementById('search-btn').disabled = false;
+      initMap(userLat, userLng);
+      doSearch();
+    }
+
+    // ── Event listeners ────────────────────────────────────────────────────────
+    document.querySelectorAll('.chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+        selectedSkill = chip.dataset.skill;
+      });
+    });
+    if (urlSkill) {
+      document.querySelectorAll('.chip').forEach(c => {
+        c.classList.toggle('active', c.dataset.skill === urlSkill);
+      });
+    }
+    document.getElementById('radius-slider').addEventListener('input', e => {
+      document.getElementById('radius-val').textContent = e.target.value;
+    });
+    document.getElementById('search-btn').addEventListener('click', doSearch);
+
+    // ── Start ──────────────────────────────────────────────────────────────────
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        onLocationSuccess,
+        onLocationError,
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+      );
+    } else {
+      onLocationError({ code: 2 });
+    }
+  </script>
+</body>
+</html>

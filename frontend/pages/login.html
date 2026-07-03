@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login — Find</title>
+  <meta name="description" content="Sign in to Find and connect with verified skilled handyworkers near you." />
+  <link rel="stylesheet" href="../assets/css/main.css" />
+  <style>
+    body { display:flex; align-items:center; justify-content:center; min-height:100vh; padding:1rem; }
+    .auth-card { width:100%; max-width:440px; }
+    .auth-header { text-align:center; margin-bottom:2rem; }
+    .auth-logo { font-size:2rem; font-weight:700; background:linear-gradient(135deg,var(--primary),#FBBF24); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; display:block; margin-bottom:.5rem; }
+    .demo-box { background:rgba(245,158,11,.08); border:1px solid var(--border-amber); border-radius:var(--radius-md); padding:1rem; margin-bottom:1.5rem; font-size:.85rem; }
+    .demo-box h4 { color:var(--primary); margin-bottom:.5rem; }
+    .demo-box p { color:var(--text-muted); line-height:1.8; margin:0; }
+    .demo-btn { background:none; border:none; color:var(--primary); font-size:.85rem; cursor:pointer; text-decoration:underline; font-family:inherit; }
+  </style>
+</head>
+<body>
+  <div class="hero-bg" style="position:fixed;inset:0;z-index:0;"></div>
+  <div class="auth-card card fade-up" style="position:relative;z-index:1;">
+    <div class="auth-header">
+      <a href="../index.html" class="auth-logo">Find.</a>
+      <h2>Welcome back</h2>
+      <p style="margin-top:.5rem;">Sign in to continue</p>
+    </div>
+
+    <!-- Demo credentials -->
+    <div class="demo-box">
+      <h4>🎯 Demo Accounts (password: <code>demo1234</code>)</h4>
+      <p>
+        Homeowner: <button class="demo-btn" onclick="fillDemo('sarah@demo.com')">sarah@demo.com</button><br>
+        Provider:  <button class="demo-btn" onclick="fillDemo('james@demo.com')">james@demo.com</button>
+      </p>
+    </div>
+
+    <form id="login-form">
+      <div class="flex-col gap-2">
+        <div class="form-group">
+          <label class="form-label">Email address</label>
+          <input id="email" type="email" class="form-input" placeholder="you@example.com" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input id="password" type="password" class="form-input" placeholder="Your password" required />
+        </div>
+        <div id="login-error" class="alert alert-error" style="display:none;"></div>
+        <button type="submit" id="submit-btn" class="btn btn-primary" style="width:100%;margin-top:.5rem;">
+          Sign In
+        </button>
+      </div>
+    </form>
+
+    <div class="divider-text mt-3">or</div>
+    <p style="text-align:center; margin-top:1rem; font-size:.9rem;">
+      Don't have an account? <a href="register.html" style="color:var(--primary);font-weight:600;">Register</a>
+    </p>
+  </div>
+
+  <div id="toast"></div>
+  <script src="../assets/js/config.js"></script>
+  <script src="../assets/js/api.js"></script>
+  <script src="../assets/js/auth.js"></script>
+  <script>
+    if (Auth.isLoggedIn()) {
+      window.location.href = Auth.isProvider()
+        ? 'provider-dash.html'
+        : 'homeowner-dash.html';
+    }
+
+    function fillDemo(email) {
+      document.getElementById('email').value = email;
+      document.getElementById('password').value = 'demo1234';
+    }
+
+    document.getElementById('login-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('submit-btn');
+      const errEl = document.getElementById('login-error');
+      errEl.style.display = 'none';
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span> Signing in…';
+
+      try {
+        const data = await api.login({
+          email: document.getElementById('email').value,
+          password: document.getElementById('password').value,
+        });
+        Auth.save(data.access_token, data.user);
+        showToast('Welcome back, ' + data.user.name + '!', 'success');
+        setTimeout(() => {
+          window.location.href = data.user.role === 'provider'
+            ? 'provider-dash.html'
+            : 'homeowner-dash.html';
+        }, 800);
+      } catch (err) {
+        errEl.textContent = err.message || 'Invalid email or password.';
+        errEl.style.display = 'flex';
+        btn.disabled = false;
+        btn.textContent = 'Sign In';
+      }
+    });
+  </script>
+</body>
+</html>

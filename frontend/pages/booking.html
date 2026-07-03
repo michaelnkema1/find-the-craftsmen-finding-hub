@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Book a Service — Find</title>
+  <meta name="description" content="Book a verified skilled handyworker for your domestic service needs." />
+  <link rel="stylesheet" href="../assets/css/main.css" />
+  <style>
+    body { padding-top: 72px; min-height: 100vh; display: flex; flex-direction: column; }
+    .booking-wrap { flex: 1; display: flex; align-items: flex-start; justify-content: center; padding: 3rem 1rem; }
+    .booking-card { width: 100%; max-width: 600px; }
+    .step-content { display: none; }
+    .step-content.active { display: block; animation: fadeUp .4s ease; }
+    .provider-mini { display: flex; align-items: center; gap: 1rem; padding: 1rem; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-md); margin-bottom: 1.5rem; }
+    .confirm-row { display: flex; justify-content: space-between; padding: .75rem 0; border-bottom: 1px solid var(--border); font-size: .95rem; }
+    .confirm-row:last-child { border-bottom: none; }
+    .confirm-row span:first-child { color: var(--text-muted); }
+    .success-icon { font-size: 4rem; margin-bottom: 1rem; animation: bounce 1s ease; }
+    .booking-id { font-size: 1.5rem; font-weight: 700; color: var(--primary); font-family: monospace; letter-spacing: .1em; }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <a href="../index.html" class="nav-logo">Find.</a>
+    <div class="nav-links"><a href="search.html">← Search</a></div>
+    <div class="nav-actions">
+      <span id="nav-user" style="display:none; font-weight:600; color:var(--primary);"></span>
+      <a id="nav-login" href="login.html" class="btn btn-secondary btn-sm">Login</a>
+      <button id="nav-logout" class="btn btn-ghost btn-sm" style="display:none;">Logout</button>
+    </div>
+  </nav>
+
+  <div class="booking-wrap">
+    <div class="booking-card fade-up">
+      <h2 style="margin-bottom:2rem; text-align:center;">Book a Service</h2>
+
+      <!-- Step indicators -->
+      <div class="steps" id="steps-bar">
+        <div class="step-item">
+          <div class="step-circle active" id="sc-1">1</div>
+          <div class="step-line" id="sl-1"></div>
+        </div>
+        <div class="step-item">
+          <div class="step-circle" id="sc-2">2</div>
+          <div class="step-line" id="sl-2"></div>
+        </div>
+        <div class="step-item" style="flex:0;">
+          <div class="step-circle" id="sc-3">✓</div>
+        </div>
+      </div>
+
+      <!-- Provider mini card -->
+      <div class="provider-mini" id="provider-mini">
+        <div class="provider-avatar" id="b-avatar" style="width:48px;height:48px;font-size:1rem;"></div>
+        <div>
+          <div style="font-weight:700;" id="b-name">Loading…</div>
+          <div style="font-size:.82rem;color:var(--text-muted);" id="b-skills"></div>
+          <div style="font-size:.85rem;color:var(--primary);font-weight:600;" id="b-rate"></div>
+        </div>
+      </div>
+
+      <!-- Step 1: Details -->
+      <div class="step-content active card" id="step-1">
+        <h3 style="margin-bottom:1.5rem;">Service Details</h3>
+        <div class="flex-col gap-2">
+          <div class="form-group">
+            <label class="form-label">Service Type</label>
+            <select id="service-type" class="form-select">
+              <option>Plumber</option><option>Electrician</option><option>Cleaner</option>
+              <option>Carpenter</option><option>Painter</option><option>Laundry</option>
+              <option>HVAC</option><option>Landscaping</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Describe the job</label>
+            <textarea id="description" class="form-textarea" placeholder="E.g. Fix a leaking kitchen pipe, replace tap washer…" rows="4"></textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Preferred Date &amp; Time</label>
+            <input type="datetime-local" id="scheduled-at" class="form-input" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Estimated Hours</label>
+            <input type="number" id="est-hours" class="form-input" placeholder="e.g. 2" min="0.5" step="0.5" value="2" />
+            <p class="form-hint" id="cost-preview"></p>
+          </div>
+          <div id="step1-error" class="alert alert-error" style="display:none;"></div>
+          <button class="btn btn-primary" style="width:100%;margin-top:.5rem;" onclick="goStep2()">Continue →</button>
+        </div>
+      </div>
+
+      <!-- Step 2: Confirm -->
+      <div class="step-content card" id="step-2">
+        <h3 style="margin-bottom:1.5rem;">Confirm Booking</h3>
+        <div id="confirm-rows"></div>
+        <div class="divider"></div>
+        <div class="flex-between" style="font-size:1.05rem;">
+          <strong>Estimated Total</strong>
+          <strong style="color:var(--primary);" id="confirm-total">—</strong>
+        </div>
+        <div class="alert alert-info mt-3" style="font-size:.85rem;">
+          💡 Final amount will be confirmed by the provider before work begins.
+        </div>
+        <div id="step2-error" class="alert alert-error mt-2" style="display:none;"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-top:1.5rem;">
+          <button class="btn btn-secondary" onclick="goStep(1)">← Back</button>
+          <button id="confirm-btn" class="btn btn-primary" onclick="submitBooking()">Confirm Booking</button>
+        </div>
+      </div>
+
+      <!-- Step 3: Success -->
+      <div class="step-content card" id="step-3" style="text-align:center;">
+        <div class="success-icon">🎉</div>
+        <h2 style="color:var(--success);">Booking Confirmed!</h2>
+        <p style="margin-top:.75rem;">Your booking has been sent to the provider. You'll be notified when they confirm.</p>
+        <div style="margin:1.5rem 0;">
+          <div style="font-size:.85rem;color:var(--text-muted);margin-bottom:.5rem;">Booking Reference</div>
+          <div class="booking-id" id="booking-ref"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-top:1.5rem;">
+          <a href="homeowner-dash.html" class="btn btn-secondary">View My Bookings</a>
+          <a href="search.html" class="btn btn-primary">Find More Workers</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+  <script src="../assets/js/config.js"></script>
+  <script src="../assets/js/api.js"></script>
+  <script src="../assets/js/auth.js"></script>
+  <script>
+    Auth.requireAuth();
+
+    const providerId = new URLSearchParams(location.search).get('provider');
+    if (!providerId) window.location.href = 'search.html';
+
+    let provider = null;
+    let currentStep = 1;
+
+    // Set min datetime to now
+    const dtInput = document.getElementById('scheduled-at');
+    dtInput.min = new Date().toISOString().slice(0,16);
+    dtInput.value = new Date(Date.now() + 3600000).toISOString().slice(0,16);
+
+    async function loadProvider() {
+      try {
+        provider = await api.getProvider(providerId);
+        document.getElementById('b-avatar').textContent = avatarInitials(provider.name);
+        document.getElementById('b-name').textContent = provider.name;
+        document.getElementById('b-skills').textContent = provider.skills || '';
+        document.getElementById('b-rate').textContent = `₵${(provider.hourly_rate||0).toLocaleString()}/hr`;
+        updateCostPreview();
+      } catch (e) {
+        showToast('Failed to load provider: ' + e.message, 'error');
+      }
+    }
+
+    function updateCostPreview() {
+      if (!provider?.hourly_rate) return;
+      const hrs = parseFloat(document.getElementById('est-hours').value) || 0;
+      const total = hrs * provider.hourly_rate;
+      document.getElementById('cost-preview').textContent =
+        `Estimated cost: ₵${total.toLocaleString()} (${hrs}h × ₵${provider.hourly_rate.toLocaleString()})`;
+    }
+    document.getElementById('est-hours').addEventListener('input', updateCostPreview);
+
+    function goStep(n) {
+      document.getElementById(`step-${currentStep}`).classList.remove('active');
+      document.getElementById(`sc-${currentStep}`)?.classList.remove('active');
+      currentStep = n;
+      document.getElementById(`step-${n}`).classList.add('active');
+      ['sc-1','sc-2','sc-3'].forEach((id,i) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.classList.remove('active','done');
+        if (i + 1 < n) el.classList.add('done'), el.textContent = '✓';
+        else if (i + 1 === n) el.classList.add('active'), el.textContent = i+1;
+        else el.textContent = i+1 === 3 ? '✓' : i+1;
+      });
+      ['sl-1','sl-2'].forEach((id,i) => {
+        document.getElementById(id)?.classList.toggle('done', i + 1 < n);
+      });
+    }
+
+    function goStep2() {
+      const errEl = document.getElementById('step1-error');
+      if (!document.getElementById('description').value.trim()) {
+        errEl.textContent = 'Please describe the job.';
+        errEl.style.display = 'flex'; return;
+      }
+      errEl.style.display = 'none';
+
+      const hrs = parseFloat(document.getElementById('est-hours').value) || 0;
+      const total = provider ? hrs * provider.hourly_rate : 0;
+      const sched = document.getElementById('scheduled-at').value;
+
+      document.getElementById('confirm-rows').innerHTML = `
+        <div class="confirm-row"><span>Provider</span><strong>${provider?.name || '—'}</strong></div>
+        <div class="confirm-row"><span>Service</span><strong>${document.getElementById('service-type').value}</strong></div>
+        <div class="confirm-row"><span>Scheduled</span><strong>${fmtDate(sched)}</strong></div>
+        <div class="confirm-row"><span>Hours</span><strong>${hrs}h</strong></div>
+        <div class="confirm-row"><span>Rate</span><strong>₵${(provider?.hourly_rate||0).toLocaleString()}/hr</strong></div>
+      `;
+      document.getElementById('confirm-total').textContent = `₵${total.toLocaleString()}`;
+      goStep(2);
+    }
+
+    async function submitBooking() {
+      const btn = document.getElementById('confirm-btn');
+      const errEl = document.getElementById('step2-error');
+      errEl.style.display = 'none';
+      btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Confirming…';
+
+      try {
+        const booking = await api.createBooking({
+          provider_id: parseInt(providerId),
+          service_type: document.getElementById('service-type').value,
+          description: document.getElementById('description').value,
+          scheduled_at: new Date(document.getElementById('scheduled-at').value).toISOString(),
+          estimated_hours: parseFloat(document.getElementById('est-hours').value) || null,
+        });
+        document.getElementById('booking-ref').textContent = `#FIND-${String(booking.id).padStart(5,'0')}`;
+        goStep(3);
+        showToast('Booking confirmed! 🎉', 'success');
+      } catch (e) {
+        if (e.message.includes('401') || e.message.includes('Not authenticated')) {
+          errEl.textContent = 'Please log in to book a service.';
+        } else {
+          errEl.textContent = e.message || 'Failed to create booking.';
+        }
+        errEl.style.display = 'flex';
+        btn.disabled = false; btn.textContent = 'Confirm Booking';
+      }
+    }
+
+    loadProvider();
+  </script>
+</body>
+</html>

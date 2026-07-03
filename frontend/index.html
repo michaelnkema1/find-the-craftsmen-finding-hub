@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Find — Skilled Labor Marketplace</title>
+  <meta name="description" content="Find verified, nearby skilled handyworkers for plumbing, cleaning, electrical, and more. Real-time GPS matching for homeowners." />
+  <link rel="stylesheet" href="assets/css/main.css" />
+  <style>
+    /* Landing-specific styles */
+    .hero { position: relative; min-height: 100vh; display: flex; align-items: center; overflow: hidden; padding-top: 80px; }
+    .hero-content { position: relative; z-index: 1; max-width: 700px; }
+    .hero-eyebrow { display: inline-flex; align-items: center; gap: .5rem; padding: .4rem 1rem; border-radius: var(--radius-full); background: rgba(245,158,11,.1); border: 1px solid var(--border-amber); color: var(--primary); font-size: .85rem; font-weight: 600; margin-bottom: 1.5rem; }
+    .hero-search { display: flex; gap: .75rem; margin-top: 2.5rem; max-width: 560px; }
+    .hero-search .form-input { flex: 1; }
+    .floating-cards { position: absolute; right: 0; top: 50%; transform: translateY(-50%); z-index: 1; display: flex; flex-direction: column; gap: 1rem; }
+    .float-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1rem 1.25rem; display: flex; align-items: center; gap: .75rem; box-shadow: var(--shadow-md); animation: bounce 3s ease-in-out infinite; }
+    .float-card:nth-child(2) { animation-delay: .5s; margin-right: -2rem; }
+    .float-card:nth-child(3) { animation-delay: 1s; }
+    .services-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; }
+    .service-item { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.75rem 1.25rem; text-align: center; cursor: pointer; transition: var(--t); }
+    .service-item:hover { border-color: var(--border-amber); background: var(--surface-2); transform: translateY(-4px); }
+    .service-icon { font-size: 2rem; margin-bottom: .75rem; }
+    .service-name { font-weight: 600; font-size: .95rem; }
+    .service-count { font-size: .8rem; color: var(--text-muted); margin-top: .25rem; }
+    .how-step { display: flex; gap: 1.5rem; align-items: flex-start; }
+    .step-num { width: 48px; height: 48px; border-radius: 50%; background: rgba(245,158,11,.12); border: 2px solid var(--border-amber); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.1rem; color: var(--primary); flex-shrink: 0; }
+    .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; }
+    .stat-box { text-align: center; }
+    .stat-num { font-size: 2.5rem; font-weight: 700; color: var(--primary); }
+    .stat-lbl { font-size: .9rem; color: var(--text-muted); margin-top: .25rem; }
+    .cta-section { background: linear-gradient(135deg, rgba(245,158,11,.15), rgba(249,115,22,.1)); border: 1px solid var(--border-amber); border-radius: var(--radius-xl); padding: 4rem; text-align: center; }
+    .testimonials-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
+    .testimonial-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.75rem; }
+    .footer { background: var(--surface); border-top: 1px solid var(--border); padding: 3rem 0 1.5rem; }
+    .footer-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 2rem; margin-bottom: 2rem; }
+    .footer-logo { font-size: 1.5rem; font-weight: 700; background: linear-gradient(135deg, var(--primary), #FBBF24); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: .75rem; }
+    .footer-links { list-style: none; display: flex; flex-direction: column; gap: .5rem; }
+    .footer-links a { color: var(--text-muted); font-size: .9rem; transition: var(--t); }
+    .footer-links a:hover { color: var(--primary); }
+    @media (max-width: 1024px) { .floating-cards { display: none; } .services-grid { grid-template-columns: repeat(4, 1fr); } .stats-row { grid-template-columns: repeat(2, 1fr); } .testimonials-grid { grid-template-columns: 1fr; } .footer-grid { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 768px) { .hero-search { flex-direction: column; } .services-grid { grid-template-columns: repeat(2, 1fr); } .cta-section { padding: 2.5rem 1.5rem; } }
+  </style>
+</head>
+<body>
+  <!-- Navbar -->
+  <nav class="navbar" id="navbar">
+    <a href="index.html" class="nav-logo">Find.</a>
+    <div class="nav-links">
+      <a href="#how-it-works">How it Works</a>
+      <a href="#services">Services</a>
+      <a href="pages/search.html">Find Workers</a>
+      <a href="pages/register.html?role=provider">Become a Provider</a>
+    </div>
+    <div class="nav-actions">
+      <span id="nav-user" style="display:none; font-weight:600; color:var(--primary);"></span>
+      <a id="nav-dash" href="#" class="btn btn-ghost btn-sm" style="display:none;">Dashboard</a>
+      <a id="nav-login" href="pages/login.html" class="btn btn-secondary btn-sm">Login</a>
+      <a href="pages/register.html" class="btn btn-primary btn-sm">Get Started</a>
+      <button id="nav-logout" class="btn btn-ghost btn-sm" style="display:none;">Logout</button>
+    </div>
+    <button class="nav-toggle" onclick="document.querySelector('.nav-links').style.display='flex'">☰</button>
+  </nav>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-grid"></div>
+    <div class="container">
+      <div class="hero-content fade-up">
+        <div class="hero-eyebrow">🔧 Verified Handyworkers Near You</div>
+        <h1>Find Skilled Workers <span class="gradient-text">Instantly</span></h1>
+        <p style="font-size:1.2rem; margin-top:1rem; max-width:560px;">Connect with verified, GPS-matched local professionals for plumbing, electrical, cleaning, carpentry and more — in minutes.</p>
+        <div class="hero-search">
+          <select class="form-input form-select" id="hero-skill" style="max-width:220px;">
+            <option value="">All Services</option>
+            <option>Plumber</option><option>Electrician</option><option>Cleaner</option>
+            <option>Carpenter</option><option>Painter</option><option>Laundry</option>
+            <option>HVAC</option><option>Landscaping</option>
+          </select>
+          <button class="btn btn-primary" onclick="goSearch()">🔍 Find Now</button>
+        </div>
+        <div class="flex gap-2 mt-3" style="flex-wrap:wrap;">
+          <span style="font-size:.85rem; color:var(--text-muted);">✅ AES-256 Secure</span>
+          <span style="font-size:.85rem; color:var(--text-muted);">📍 Real-time GPS</span>
+          <span style="font-size:.85rem; color:var(--text-muted);">⭐ Verified Reviews</span>
+        </div>
+      </div>
+
+      <div class="floating-cards">
+        <div class="float-card">
+          <div class="provider-avatar" style="width:42px;height:42px;font-size:1rem;">JO</div>
+          <div>
+            <div style="font-weight:600;font-size:.9rem;">James Okafor</div>
+            <div style="font-size:.78rem;color:var(--text-muted);">Plumber · ⭐ 4.9</div>
+          </div>
+          <span class="verified-badge" style="margin-left:.5rem;">✓</span>
+        </div>
+        <div class="float-card">
+          <div class="provider-avatar" style="width:42px;height:42px;font-size:1rem;background:linear-gradient(135deg,#10B981,#059669);">AD</div>
+          <div>
+            <div style="font-weight:600;font-size:.9rem;">Amara Diallo</div>
+            <div style="font-size:.78rem;color:var(--text-muted);">Cleaner · ⭐ 4.8</div>
+          </div>
+          <span class="verified-badge" style="margin-left:.5rem;">✓</span>
+        </div>
+        <div class="float-card">
+          <div class="provider-avatar" style="width:42px;height:42px;font-size:1rem;background:linear-gradient(135deg,#8B5CF6,#6D28D9);">DT</div>
+          <div>
+            <div style="font-weight:600;font-size:.9rem;">David Torres</div>
+            <div style="font-size:.78rem;color:var(--text-muted);">Carpenter · ⭐ 5.0</div>
+          </div>
+          <span class="verified-badge" style="margin-left:.5rem;">✓</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Stats -->
+  <section class="section-sm" style="background:var(--surface); border-top:1px solid var(--border); border-bottom:1px solid var(--border);">
+    <div class="container">
+      <div class="stats-row">
+        <div class="stat-box fade-up"><div class="stat-num" data-target="12400">0</div><div class="stat-lbl">Verified Workers</div></div>
+        <div class="stat-box fade-up fade-up-1"><div class="stat-num" data-target="58200">0</div><div class="stat-lbl">Jobs Completed</div></div>
+        <div class="stat-box fade-up fade-up-2"><div class="stat-num" data-target="48">4.8</div><div class="stat-lbl">Average Rating</div></div>
+        <div class="stat-box fade-up fade-up-3"><div class="stat-num" data-target="98">0</div><div class="stat-lbl">% Satisfaction Rate</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Services -->
+  <section class="section" id="services">
+    <div class="container">
+      <div class="text-center mb-3">
+        <h2>Browse by <span class="gradient-text">Service</span></h2>
+        <p style="margin-top:.75rem;">Find the right professional for any domestic task</p>
+      </div>
+      <div class="services-grid">
+        <div class="service-item" onclick="goSearch('Plumber')"><div class="service-icon">🔧</div><div class="service-name">Plumbing</div><div class="service-count">240+ workers</div></div>
+        <div class="service-item" onclick="goSearch('Electrician')"><div class="service-icon">⚡</div><div class="service-name">Electrical</div><div class="service-count">185+ workers</div></div>
+        <div class="service-item" onclick="goSearch('Cleaner')"><div class="service-icon">🧹</div><div class="service-name">Cleaning</div><div class="service-count">320+ workers</div></div>
+        <div class="service-item" onclick="goSearch('Carpenter')"><div class="service-icon">🪚</div><div class="service-name">Carpentry</div><div class="service-count">140+ workers</div></div>
+        <div class="service-item" onclick="goSearch('Painter')"><div class="service-icon">🎨</div><div class="service-name">Painting</div><div class="service-count">95+ workers</div></div>
+        <div class="service-item" onclick="goSearch('Laundry')"><div class="service-icon">👕</div><div class="service-name">Laundry</div><div class="service-count">110+ workers</div></div>
+        <div class="service-item" onclick="goSearch('HVAC')"><div class="service-icon">❄️</div><div class="service-name">HVAC</div><div class="service-count">78+ workers</div></div>
+        <div class="service-item" onclick="goSearch('Landscaping')"><div class="service-icon">🌿</div><div class="service-name">Landscaping</div><div class="service-count">62+ workers</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- How it Works -->
+  <section class="section" id="how-it-works" style="background:var(--surface);">
+    <div class="container">
+      <div class="text-center mb-3">
+        <h2>How <span class="gradient-text">Find</span> Works</h2>
+        <p style="margin-top:.75rem;">Get help in three simple steps</p>
+      </div>
+      <div class="grid-3">
+        <div class="how-step fade-up" style="flex-direction:column; text-align:center; align-items:center;">
+          <div class="step-num">1</div>
+          <h3 style="margin-top:1rem;">Search Nearby</h3>
+          <p style="margin-top:.5rem;">Use your GPS location to instantly discover verified workers within your radius.</p>
+        </div>
+        <div class="how-step fade-up fade-up-1" style="flex-direction:column; text-align:center; align-items:center;">
+          <div class="step-num">2</div>
+          <h3 style="margin-top:1rem;">Review &amp; Book</h3>
+          <p style="margin-top:.5rem;">Read verified ratings and reviews, then book a time that suits your schedule.</p>
+        </div>
+        <div class="how-step fade-up fade-up-2" style="flex-direction:column; text-align:center; align-items:center;">
+          <div class="step-num">3</div>
+          <h3 style="margin-top:1rem;">Job Done ✓</h3>
+          <p style="margin-top:.5rem;">Track your worker in real-time, then leave a verified review after completion.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Testimonials -->
+  <section class="section">
+    <div class="container">
+      <div class="text-center mb-3">
+        <h2>What Homeowners <span class="gradient-text">Say</span></h2>
+      </div>
+      <div class="testimonials-grid">
+        <div class="testimonial-card fade-up">
+          <div class="stars mb-2">★★★★★</div>
+          <p style="font-size:.95rem; margin-bottom:1rem;">"Found a plumber within 10 minutes and he arrived in under an hour. Incredible service!"</p>
+          <div class="flex gap-2">
+            <div class="provider-avatar" style="width:36px;height:36px;font-size:.8rem;">SJ</div>
+            <div><div style="font-weight:600;font-size:.9rem;">Sarah Johnson</div><div style="font-size:.78rem;color:var(--text-muted);">Accra, Ghana</div></div>
+          </div>
+        </div>
+        <div class="testimonial-card fade-up fade-up-1">
+          <div class="stars mb-2">★★★★★</div>
+          <p style="font-size:.95rem; margin-bottom:1rem;">"Amara did a deep clean of my apartment — spotless. Will definitely book again."</p>
+          <div class="flex gap-2">
+            <div class="provider-avatar" style="width:36px;height:36px;font-size:.8rem;background:linear-gradient(135deg,#8B5CF6,#6D28D9);">MW</div>
+            <div><div style="font-weight:600;font-size:.9rem;">Marcus Williams</div><div style="font-size:.78rem;color:var(--text-muted);">Nairobi, Kenya</div></div>
+          </div>
+        </div>
+        <div class="testimonial-card fade-up fade-up-2">
+          <div class="stars mb-2">★★★★★</div>
+          <p style="font-size:.95rem; margin-bottom:1rem;">"The verified badge system gives me real confidence. No more guessing who to trust."</p>
+          <div class="flex gap-2">
+            <div class="provider-avatar" style="width:36px;height:36px;font-size:.8rem;background:linear-gradient(135deg,#10B981,#059669);">AO</div>
+            <div><div style="font-weight:600;font-size:.9rem;">Akin Okafor</div><div style="font-size:.78rem;color:var(--text-muted);">Cape Town, SA</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="section-sm">
+    <div class="container">
+      <div class="cta-section">
+        <h2>Ready to <span class="gradient-text">Get Started?</span></h2>
+        <p style="margin-top:.75rem; font-size:1.05rem;">Join thousands of homeowners and skilled workers on Find.</p>
+        <div class="flex gap-2 mt-3" style="justify-content:center; flex-wrap:wrap;">
+          <a href="pages/register.html" class="btn btn-primary btn-lg">Find a Worker</a>
+          <a href="pages/register.html?role=provider" class="btn btn-secondary btn-lg">Become a Provider</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div>
+          <div class="footer-logo">Find.</div>
+          <p style="font-size:.9rem; max-width:280px;">The trusted marketplace for verified skilled handyworkers. Fast, secure, and local.</p>
+        </div>
+        <div>
+          <h4 style="margin-bottom:1rem;">Platform</h4>
+          <ul class="footer-links">
+            <li><a href="pages/search.html">Search Workers</a></li>
+            <li><a href="pages/register.html?role=provider">Become a Provider</a></li>
+            <li><a href="#how-it-works">How it Works</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4 style="margin-bottom:1rem;">Account</h4>
+          <ul class="footer-links">
+            <li><a href="pages/login.html">Login</a></li>
+            <li><a href="pages/register.html">Register</a></li>
+            <li><a href="pages/homeowner-dash.html">My Bookings</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4 style="margin-bottom:1rem;">Services</h4>
+          <ul class="footer-links">
+            <li><a href="#">Plumbing</a></li><li><a href="#">Electrical</a></li>
+            <li><a href="#">Cleaning</a></li><li><a href="#">Carpentry</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="divider"></div>
+      <div class="flex-between" style="flex-wrap:wrap; gap:1rem;">
+        <p style="font-size:.85rem;">© 2026 Find Platform. All rights reserved.</p>
+        <p style="font-size:.85rem;">Built with AES-256 security &amp; real-time GPS</p>
+      </div>
+    </div>
+  </footer>
+
+  <div id="toast"></div>
+  <script src="assets/js/config.js"></script>
+  <script src="assets/js/api.js"></script>
+  <script src="assets/js/auth.js"></script>
+  <script>
+    function goSearch(skill) {
+      const s = skill || document.getElementById('hero-skill').value;
+      const url = 'pages/search.html' + (s ? `?skill=${encodeURIComponent(s)}` : '');
+      window.location.href = url;
+    }
+
+    // Animated counter
+    function animateCounter(el, target, isDecimal) {
+      let current = 0, step = target / 60;
+      const timer = setInterval(() => {
+        current = Math.min(current + step, target);
+        el.textContent = isDecimal
+          ? (current / 10).toFixed(1)
+          : Math.round(current).toLocaleString() + (el.dataset.target == '98' ? '%' : '+');
+        if (current >= target) clearInterval(timer);
+      }, 25);
+    }
+
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          const el = e.target;
+          const t = parseInt(el.dataset.target);
+          animateCounter(el, el.dataset.target == '48' ? 48 : t, el.dataset.target == '48');
+          observer.unobserve(el);
+        }
+      });
+    }, { threshold: 0.5 });
+
+    document.querySelectorAll('[data-target]').forEach(el => observer.observe(el));
+  </script>
+</body>
+</html>

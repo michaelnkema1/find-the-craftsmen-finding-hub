@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Provider Profile — Find</title>
+  <meta name="description" content="View provider profile, verified reviews, and book a skilled handyworker." />
+  <link rel="stylesheet" href="../assets/css/main.css" />
+  <style>
+    body { padding-top: 72px; }
+    .profile-hero { background: linear-gradient(135deg, rgba(245,158,11,.15), rgba(249,115,22,.08)); border-bottom: 1px solid var(--border); padding: 3rem 0 2rem; }
+    .profile-top { display: flex; align-items: flex-start; gap: 2rem; flex-wrap: wrap; }
+    .provider-avatar.xl { width: 120px; height: 120px; font-size: 2.5rem; flex-shrink: 0; }
+    .profile-info { flex: 1; min-width: 240px; }
+    .profile-meta { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: .75rem; align-items: center; }
+    .profile-actions { display: flex; flex-direction: column; gap: .75rem; min-width: 200px; }
+    .rate-badge { background: rgba(245,158,11,.12); border: 1px solid var(--border-amber); border-radius: var(--radius-md); padding: .75rem 1.25rem; text-align: center; }
+    .rate-amt { font-size: 1.75rem; font-weight: 700; color: var(--primary); }
+    .rate-lbl { font-size: .8rem; color: var(--text-muted); }
+    .avail-indicator { display: inline-flex; align-items: center; gap: .5rem; font-size: .85rem; font-weight: 600; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; }
+    .dot.green { background: var(--success); box-shadow: 0 0 6px var(--success); }
+    .dot.grey  { background: var(--text-subtle); }
+    .content-grid { display: grid; grid-template-columns: 1fr 340px; gap: 2rem; padding: 2.5rem 0; }
+    .rating-histogram .bar-row { display: flex; align-items: center; gap: .75rem; margin-bottom: .5rem; }
+    .bar-row label { font-size: .85rem; width: 16px; text-align: right; }
+    .bar-track { flex: 1; height: 8px; background: var(--surface-2); border-radius: 4px; overflow: hidden; }
+    .bar-fill { height: 100%; background: linear-gradient(90deg, var(--primary), #FBBF24); border-radius: 4px; transition: width .8s ease; }
+    .bar-count { font-size: .8rem; color: var(--text-muted); width: 28px; }
+    .review-item { padding: 1.25rem 0; border-bottom: 1px solid var(--border); }
+    .review-item:last-child { border-bottom: none; }
+    .skeleton-block { height: 20px; margin-bottom: .75rem; border-radius: 6px; }
+    @media (max-width: 900px) { .content-grid { grid-template-columns: 1fr; } .profile-actions { flex-direction: row; min-width: unset; } }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <a href="../index.html" class="nav-logo">Find.</a>
+    <div class="nav-links"><a href="search.html">← Back to Search</a></div>
+    <div class="nav-actions">
+      <span id="nav-user" style="display:none; font-weight:600; color:var(--primary);"></span>
+      <a id="nav-dash" href="#" class="btn btn-ghost btn-sm" style="display:none;">Dashboard</a>
+      <a id="nav-login" href="login.html" class="btn btn-secondary btn-sm">Login</a>
+      <button id="nav-logout" class="btn btn-ghost btn-sm" style="display:none;">Logout</button>
+    </div>
+  </nav>
+
+  <!-- Loading skeleton -->
+  <div id="skeleton" class="profile-hero">
+    <div class="container">
+      <div style="display:flex;gap:2rem;align-items:flex-start;">
+        <div class="skeleton" style="width:120px;height:120px;border-radius:50%;flex-shrink:0;"></div>
+        <div style="flex:1;">
+          <div class="skeleton skeleton-block" style="width:240px;"></div>
+          <div class="skeleton skeleton-block" style="width:180px;"></div>
+          <div class="skeleton skeleton-block" style="width:320px;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Profile hero (hidden until loaded) -->
+  <div id="profile-hero" class="profile-hero" style="display:none;">
+    <div class="container">
+      <div class="profile-top">
+        <div class="provider-avatar xl" id="p-avatar"></div>
+        <div class="profile-info">
+          <div class="flex gap-2" style="align-items:center;flex-wrap:wrap;">
+            <h1 id="p-name" style="font-size:1.75rem;"></h1>
+            <span id="p-verified" style="display:none;" class="verified-badge">✓ Verified</span>
+          </div>
+          <div class="profile-meta">
+            <div class="rating-row">
+              <div class="stars" id="p-stars"></div>
+              <span class="rating-value" id="p-rating"></span>
+              <span class="rating-count" id="p-reviews-count"></span>
+            </div>
+            <span id="p-avail" class="avail-indicator"></span>
+          </div>
+          <div id="p-skills" class="flex gap-1 mt-2" style="flex-wrap:wrap;"></div>
+          <p id="p-bio" style="margin-top:1rem; max-width:600px;"></p>
+        </div>
+        <div class="profile-actions">
+          <div class="rate-badge">
+            <div class="rate-amt" id="p-rate"></div>
+            <div class="rate-lbl">per hour</div>
+          </div>
+          <div style="display:flex;gap:.5rem;">
+            <span style="font-size:.8rem;color:var(--text-muted);">🏆 <span id="p-jobs"></span> jobs</span>
+          </div>
+          <a id="book-btn" href="#" class="btn btn-primary" style="text-align:center;">📅 Book Now</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Content -->
+  <div class="container">
+    <div class="content-grid" id="content-grid" style="display:none;">
+      <!-- Reviews -->
+      <div>
+        <h2 style="margin-bottom:1.5rem;">Reviews</h2>
+        <!-- Rating histogram -->
+        <div class="card mb-3" id="rating-card">
+          <div class="flex gap-3" style="align-items:center;margin-bottom:1.5rem;">
+            <div style="text-align:center;">
+              <div style="font-size:3rem;font-weight:700;color:var(--primary);" id="hist-avg">—</div>
+              <div class="stars" id="hist-stars"></div>
+              <div style="font-size:.8rem;color:var(--text-muted);margin-top:.25rem;" id="hist-count"></div>
+            </div>
+            <div class="rating-histogram" id="histogram" style="flex:1;"></div>
+          </div>
+        </div>
+        <div id="reviews-list"></div>
+      </div>
+
+      <!-- Sidebar -->
+      <div>
+        <div class="card mb-2">
+          <h3 style="margin-bottom:1rem;">📍 Location</h3>
+          <div id="loc-map" style="height:180px;border-radius:var(--radius-md);overflow:hidden;"></div>
+        </div>
+        <div class="card">
+          <h3 style="margin-bottom:1rem;">Quick Stats</h3>
+          <div class="flex-col gap-2">
+            <div class="flex-between"><span style="color:var(--text-muted);">Total Jobs</span><strong id="s-jobs">—</strong></div>
+            <div class="divider" style="margin:.25rem 0;"></div>
+            <div class="flex-between"><span style="color:var(--text-muted);">Reviews</span><strong id="s-reviews">—</strong></div>
+            <div class="divider" style="margin:.25rem 0;"></div>
+            <div class="flex-between"><span style="color:var(--text-muted);">Rating</span><strong id="s-rating" style="color:var(--primary);">—</strong></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+  <script src="../assets/js/config.js"></script>
+  <script src="../assets/js/api.js"></script>
+  <script src="../assets/js/auth.js"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    const providerId = new URLSearchParams(location.search).get('id');
+
+    if (!providerId) window.location.href = 'search.html';
+
+    async function load() {
+      try {
+        const [p, reviews] = await Promise.all([
+          api.getProvider(providerId),
+          api.getProviderReviews(providerId),
+        ]);
+
+        // Update page title
+        document.title = `${p.name} — Find`;
+
+        // Hero
+        document.getElementById('p-avatar').textContent = avatarInitials(p.name);
+        document.getElementById('p-name').textContent = p.name;
+        if (p.is_verified) document.getElementById('p-verified').style.display = 'inline-flex';
+        document.getElementById('p-stars').innerHTML = renderStars(p.rating_avg);
+        document.getElementById('p-rating').textContent = p.rating_avg;
+        document.getElementById('p-reviews-count').textContent = `(${p.total_reviews} reviews)`;
+        document.getElementById('p-avail').innerHTML = p.availability_status
+          ? '<span class="dot green"></span> Available Now'
+          : '<span class="dot grey"></span> Unavailable';
+        document.getElementById('p-skills').innerHTML = skillTags(p.skills || '');
+        document.getElementById('p-bio').textContent = p.bio || 'No bio provided.';
+        document.getElementById('p-rate').textContent = `₵${(p.hourly_rate || 0).toLocaleString()}`;
+        document.getElementById('p-jobs').textContent = p.total_jobs;
+        document.getElementById('book-btn').href = `booking.html?provider=${p.id}`;
+
+        // Stats
+        document.getElementById('s-jobs').textContent = p.total_jobs;
+        document.getElementById('s-reviews').textContent = p.total_reviews;
+        document.getElementById('s-rating').textContent = `⭐ ${p.rating_avg}`;
+
+        // Histogram
+        const counts = [5,4,3,2,1].map(r => reviews.filter(rv => rv.rating === r).length);
+        const maxCount = Math.max(...counts, 1);
+        document.getElementById('hist-avg').textContent = p.rating_avg;
+        document.getElementById('hist-stars').innerHTML = renderStars(p.rating_avg);
+        document.getElementById('hist-count').textContent = `${p.total_reviews} reviews`;
+        document.getElementById('histogram').innerHTML = [5,4,3,2,1].map((r,i) => `
+          <div class="bar-row">
+            <label>${r}</label>
+            <div class="bar-track"><div class="bar-fill" style="width:${Math.round(counts[i]/maxCount*100)}%;"></div></div>
+            <span class="bar-count">${counts[i]}</span>
+          </div>`).join('');
+
+        // Reviews
+        const listEl = document.getElementById('reviews-list');
+        if (!reviews.length) {
+          listEl.innerHTML = '<p style="color:var(--text-muted);">No reviews yet.</p>';
+        } else {
+          listEl.innerHTML = reviews.map(r => `
+            <div class="review-item">
+              <div class="flex-between mb-1">
+                <div class="flex gap-2">
+                  <div class="provider-avatar" style="width:36px;height:36px;font-size:.8rem;">${avatarInitials(r.homeowner_name||'?')}</div>
+                  <div>
+                    <div style="font-weight:600;font-size:.9rem;">${r.homeowner_name || 'Anonymous'}</div>
+                    <div style="font-size:.78rem;color:var(--text-muted);">${fmtDate(r.created_at)}</div>
+                  </div>
+                </div>
+                <div class="stars">${renderStars(r.rating)}</div>
+              </div>
+              <p style="font-size:.9rem;margin-top:.5rem;">${r.text || ''}</p>
+            </div>`).join('');
+        }
+
+        // Mini map
+        if (p.location_lat && p.location_lng) {
+          const mini = L.map('loc-map', { zoomControl: false, dragging: false, scrollWheelZoom: false })
+            .setView([p.location_lat, p.location_lng], 14);
+          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mini);
+          L.marker([p.location_lat, p.location_lng]).addTo(mini);
+        }
+
+        document.getElementById('skeleton').style.display = 'none';
+        document.getElementById('profile-hero').style.display = 'block';
+        document.getElementById('content-grid').style.display = 'grid';
+      } catch (e) {
+        showToast('Failed to load provider: ' + e.message, 'error');
+      }
+    }
+
+    load();
+  </script>
+</body>
+</html>
