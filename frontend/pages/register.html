@@ -260,9 +260,13 @@
         Auth.save(data.access_token, data.user);
         showToast('Account created! Welcome to Find 🎉', 'success');
         setTimeout(() => {
-          window.location.href = selectedRole === 'provider'
-            ? 'provider-dash.html'
-            : 'search.html';
+          const fallback = selectedRole === 'provider'
+            ? _pages('provider-dash.html')
+            : _pages('search.html');
+          const target = Auth.consumeRedirect(fallback);
+          window.location.href = target.startsWith('/') || target.includes('pages/') || !target.includes('://')
+            ? target
+            : fallback;
         }, 900);
       } catch (err) {
         errEl.textContent = err.message || 'Registration failed. Please try again.';

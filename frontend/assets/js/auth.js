@@ -1,6 +1,5 @@
 /* Auth utilities for the Find platform */
 
-// Relative-path helpers — work for both file:// and http://
 const _inPages = () => window.location.pathname.includes('/pages/') || window.location.href.includes('/pages/');
 const _pages   = (p) => _inPages() ? p : 'pages/' + p;
 const _root    = (p) => _inPages() ? '../' + p : p;
@@ -20,12 +19,69 @@ const Auth = {
   logout() {
     localStorage.removeItem('find_token');
     localStorage.removeItem('find_user');
+    sessionStorage.removeItem('find_redirect');
     window.location.href = _pages('login.html');
+  },
+
+  dashboardUrl(user = Auth.getUser()) {
+    return user?.role === 'provider'
+      ? _pages('provider-dash.html')
+      : _pages('homeowner-dash.html');
+  },
+
+  loginUrl(returnTo) {
+    const base = _pages('login.html');
+    if (!returnTo) return base;
+    return `${base}?redirect=${encodeURIComponent(returnTo)}`;
+  },
+
+  /** Path to return to after login (same-origin relative URL). */
+  currentReturnPath() {
+    return window.location.pathname + window.location.search;
+  },
+
+  saveRedirect(path) {
+    sessionStorage.setItem('find_redirect', path || Auth.currentReturnPath());
+  },
+
+  consumeRedirect(fallback) {
+    const params = new URLSearchParams(window.location.search);
+    const fromQuery = params.get('redirect');
+    const fromSession = sessionStorage.getItem('find_redirect');
+    sessionStorage.removeItem('find_redirect');
+
+    const candidate = fromQuery || fromSession;
+    if (!candidate) return fallback;
+
+    // Block open redirects — only allow relative in-app paths
+    if (candidate.includes('://') || candidate.startsWith('//')) return fallback;
+    const path = candidate.startsWith('/') ? candidate : candidate.replace(/^\.\//, '');
+    if (path.includes('..')) return fallback;
+    return path.startsWith('/') ? path : path;
   },
 
   requireAuth(redirectTo) {
     if (!Auth.isLoggedIn()) {
-      window.location.href = redirectTo || _pages('login.html');
+      Auth.saveRedirect(typeof redirectTo === 'string' ? redirectTo : Auth.currentReturnPath());
+      window.location.href = Auth.loginUrl(Auth.currentReturnPath());
+      return false;
+    }
+    return true;
+  },
+
+  requireHomeowner() {
+    if (!Auth.requireAuth()) return false;
+    if (!Auth.isHomeowner()) {
+      window.location.href = _pages('provider-dash.html');
+      return false;
+    }
+    return true;
+  },
+
+  requireProvider() {
+    if (!Auth.requireAuth()) return false;
+    if (!Auth.isProvider()) {
+      window.location.href = _pages('homeowner-dash.html');
       return false;
     }
     return true;
@@ -38,6 +94,14 @@ const Auth = {
       return false;
     }
     return true;
+  },
+
+  /** Use after login/register to land on the intended page. */
+  redirectAfterAuth(user) {
+    const fallback = user.role === 'provider'
+      ? _pages('provider-dash.html')
+      : _pages('homeowner-dash.html');
+    window.location.href = Auth.consumeRedirect(fallback);
   },
 };
 
@@ -55,9 +119,7 @@ function initNavUser() {
     if (navLogout) { navLogout.style.display = 'inline-flex'; navLogout.onclick = Auth.logout; }
     if (navDash) {
       navDash.style.display = 'inline-flex';
-      navDash.href = user.role === 'provider'
-        ? _pages('provider-dash.html')
-        : _pages('homeowner-dash.html');
+      navDash.href = Auth.dashboardUrl(user);
     }
   } else {
     if (navUser)   navUser.style.display = 'none';
