@@ -1,5 +1,5 @@
 """Basic auth regression tests."""
-from auth import create_access_token, decode_access_token, encrypt_field, decrypt_field
+from auth import create_access_token, decode_access_token, encrypt_field, decrypt_field, hash_password, verify_password
 
 
 def test_jwt_sub_must_be_string():
@@ -14,6 +14,12 @@ def test_encrypt_decrypt_roundtrip():
     encrypted = encrypt_field(plain)
     assert encrypted != plain
     assert decrypt_field(encrypted) == plain
+
+
+def test_password_hash_and_verify():
+    hashed = hash_password("demo1234")
+    assert verify_password("demo1234", hashed)
+    assert not verify_password("wrong-password", hashed)
 
 
 def test_decrypt_legacy_plaintext_email():

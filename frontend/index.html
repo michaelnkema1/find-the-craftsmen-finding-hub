@@ -245,14 +245,14 @@
           <ul class="footer-links">
             <li><a href="pages/login.html">Login</a></li>
             <li><a href="pages/register.html">Register</a></li>
-            <li><a href="pages/homeowner-dash.html">My Bookings</a></li>
+            <li><a href="#" id="footer-dash-link" onclick="goDashboard(event)">My Dashboard</a></li>
           </ul>
         </div>
         <div>
           <h4 style="margin-bottom:1rem;">Services</h4>
           <ul class="footer-links">
-            <li><a href="#">Plumbing</a></li><li><a href="#">Electrical</a></li>
-            <li><a href="#">Cleaning</a></li><li><a href="#">Carpentry</a></li>
+            <li><a href="pages/search.html?skill=Plumber">Plumbing</a></li><li><a href="pages/search.html?skill=Electrician">Electrical</a></li>
+            <li><a href="pages/search.html?skill=Cleaner">Cleaning</a></li><li><a href="pages/search.html?skill=Carpenter">Carpentry</a></li>
           </ul>
         </div>
       </div>
@@ -273,6 +273,16 @@
       const s = skill || document.getElementById('hero-skill').value;
       const url = 'pages/search.html' + (s ? `?skill=${encodeURIComponent(s)}` : '');
       window.location.href = url;
+    }
+
+    function goDashboard(e) {
+      e.preventDefault();
+      if (!Auth.isLoggedIn()) {
+        Auth.saveRedirect(Auth.dashboardUrl({ role: 'homeowner' }));
+        window.location.href = Auth.loginUrl(Auth.dashboardUrl({ role: 'homeowner' }));
+        return;
+      }
+      window.location.href = Auth.dashboardUrl();
     }
 
     // Animated counter

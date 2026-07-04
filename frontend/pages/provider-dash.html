@@ -134,8 +134,7 @@
   <script src="../assets/js/api.js"></script>
   <script src="../assets/js/auth.js"></script>
   <script>
-    Auth.requireAuth();
-    if (!Auth.isProvider()) window.location.href = 'homeowner-dash.html';
+    Auth.requireProvider();
 
     const user = Auth.getUser();
     let providerData = null;

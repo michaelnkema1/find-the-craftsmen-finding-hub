@@ -25,6 +25,7 @@
     <div class="nav-links"><a href="search.html">← Search</a></div>
     <div class="nav-actions">
       <span id="nav-user" style="display:none; font-weight:600; color:var(--primary);"></span>
+      <a id="nav-dash" href="#" class="btn btn-ghost btn-sm" style="display:none;">Dashboard</a>
       <a id="nav-login" href="login.html" class="btn btn-secondary btn-sm">Login</a>
       <button id="nav-logout" class="btn btn-ghost btn-sm" style="display:none;">Logout</button>
     </div>
@@ -130,8 +131,12 @@
   <script src="../assets/js/api.js"></script>
   <script src="../assets/js/auth.js"></script>
   <script>
-    Auth.requireAuth();
-
+    if (!Auth.isLoggedIn()) {
+      Auth.saveRedirect(Auth.currentReturnPath());
+      window.location.href = Auth.loginUrl(Auth.currentReturnPath());
+    } else if (!Auth.isHomeowner()) {
+      window.location.href = 'provider-dash.html';
+    } else {
     const providerId = new URLSearchParams(location.search).get('provider');
     if (!providerId) window.location.href = 'search.html';
 
@@ -235,6 +240,7 @@
     }
 
     loadProvider();
+    } // end auth guard
   </script>
 </body>
 </html>

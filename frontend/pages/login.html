@@ -63,9 +63,7 @@
   <script src="../assets/js/auth.js"></script>
   <script>
     if (Auth.isLoggedIn()) {
-      window.location.href = Auth.isProvider()
-        ? 'provider-dash.html'
-        : 'homeowner-dash.html';
+      window.location.href = Auth.dashboardUrl();
     }
 
     function fillDemo(email) {
@@ -88,11 +86,7 @@
         });
         Auth.save(data.access_token, data.user);
         showToast('Welcome back, ' + data.user.name + '!', 'success');
-        setTimeout(() => {
-          window.location.href = data.user.role === 'provider'
-            ? 'provider-dash.html'
-            : 'homeowner-dash.html';
-        }, 800);
+        setTimeout(() => Auth.redirectAfterAuth(data.user), 800);
       } catch (err) {
         errEl.textContent = err.message || 'Invalid email or password.';
         errEl.style.display = 'flex';
