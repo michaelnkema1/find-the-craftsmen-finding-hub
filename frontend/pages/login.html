@@ -10,10 +10,7 @@
     .auth-card { width:100%; max-width:440px; }
     .auth-header { text-align:center; margin-bottom:2rem; }
     .auth-logo { font-size:2rem; font-weight:700; background:linear-gradient(135deg,var(--primary),#FBBF24); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; display:block; margin-bottom:.5rem; }
-    .demo-box { background:rgba(245,158,11,.08); border:1px solid var(--border-amber); border-radius:var(--radius-md); padding:1rem; margin-bottom:1.5rem; font-size:.85rem; }
-    .demo-box h4 { color:var(--primary); margin-bottom:.5rem; }
-    .demo-box p { color:var(--text-muted); line-height:1.8; margin:0; }
-    .demo-btn { background:none; border:none; color:var(--primary); font-size:.85rem; cursor:pointer; text-decoration:underline; font-family:inherit; }
+
   </style>
 </head>
 <body>
@@ -25,14 +22,6 @@
       <p style="margin-top:.5rem;">Sign in to continue</p>
     </div>
 
-    <!-- Demo credentials -->
-    <div class="demo-box">
-      <h4>🎯 Demo Accounts (password: <code>demo1234</code>)</h4>
-      <p>
-        Homeowner: <button class="demo-btn" onclick="fillDemo('sarah@demo.com')">sarah@demo.com</button><br>
-        Provider:  <button class="demo-btn" onclick="fillDemo('james@demo.com')">james@demo.com</button>
-      </p>
-    </div>
 
     <form id="login-form">
       <div class="flex-col gap-2">
@@ -66,10 +55,6 @@
       window.location.href = Auth.dashboardUrl();
     }
 
-    function fillDemo(email) {
-      document.getElementById('email').value = email;
-      document.getElementById('password').value = 'demo1234';
-    }
 
     document.getElementById('login-form').addEventListener('submit', async (e) => {
       e.preventDefault();
