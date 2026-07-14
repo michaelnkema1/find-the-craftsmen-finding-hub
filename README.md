@@ -30,7 +30,7 @@ Install the following before starting:
 ## 1. Clone the Repository
 
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/michaelnkema1/find-the-craftsmen-finding-hub
 cd find
 ```
 
