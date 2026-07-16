@@ -85,9 +85,9 @@
             <div class="rate-lbl">per hour</div>
           </div>
           <div style="display:flex;gap:.5rem;">
-            <span style="font-size:.8rem;color:var(--text-muted);">🏆 <span id="p-jobs"></span> jobs</span>
+            <span style="font-size:.8rem;color:var(--text-muted);"><span id="p-jobs"></span> jobs</span>
           </div>
-          <a id="book-btn" href="#" class="btn btn-primary" style="text-align:center;">📅 Book Now</a>
+          <a id="book-btn" href="#" class="btn btn-primary" style="text-align:center;">Book Now</a>
         </div>
       </div>
     </div>
@@ -116,7 +116,7 @@
       <!-- Sidebar -->
       <div>
         <div class="card mb-2">
-          <h3 style="margin-bottom:1rem;">📍 Location</h3>
+          <h3 style="margin-bottom:1rem;">Location</h3>
           <div id="loc-map" style="height:180px;border-radius:var(--radius-md);overflow:hidden;"></div>
         </div>
         <div class="card">
@@ -172,7 +172,7 @@
         // Stats
         document.getElementById('s-jobs').textContent = p.total_jobs;
         document.getElementById('s-reviews').textContent = p.total_reviews;
-        document.getElementById('s-rating').textContent = `⭐ ${p.rating_avg}`;
+        document.getElementById('s-rating').textContent = `${p.rating_avg}`;
 
         // Histogram
         const counts = [5,4,3,2,1].map(r => reviews.filter(rv => rv.rating === r).length);

@@ -42,10 +42,10 @@
   <div class="container" style="padding-bottom:3rem;">
     <!-- Stats row -->
     <div class="grid-4 mb-3" id="stats-row">
-      <div class="stat-card"><div class="stat-icon">📋</div><div><div class="stat-value" id="st-total">—</div><div class="stat-label">Total Bookings</div></div></div>
-      <div class="stat-card"><div class="stat-icon">⏳</div><div><div class="stat-value" id="st-pending">—</div><div class="stat-label">Pending</div></div></div>
-      <div class="stat-card"><div class="stat-icon">✅</div><div><div class="stat-value" id="st-done">—</div><div class="stat-label">Completed</div></div></div>
-      <div class="stat-card"><div class="stat-icon">⭐</div><div><div class="stat-value" id="st-reviews">—</div><div class="stat-label">Reviews Given</div></div></div>
+      <div class="stat-card"><div class="stat-icon"></div><div><div class="stat-value" id="st-total">—</div><div class="stat-label">Total Bookings</div></div></div>
+      <div class="stat-card"><div class="stat-icon"></div><div><div class="stat-value" id="st-pending">—</div><div class="stat-label">Pending</div></div></div>
+      <div class="stat-card"><div class="stat-icon"></div><div><div class="stat-value" id="st-done">—</div><div class="stat-label">Completed</div></div></div>
+      <div class="stat-card"><div class="stat-icon"></div><div><div class="stat-value" id="st-reviews">—</div><div class="stat-label">Reviews Given</div></div></div>
     </div>
 
     <!-- Tabs -->
@@ -128,7 +128,7 @@
 
       const el = document.getElementById('bookings-list');
       if (!items.length) {
-        el.innerHTML = `<div class="empty-state"><div class="icon">📭</div><p>No bookings found.</p><a href="search.html" class="btn btn-primary mt-3">Find a Worker</a></div>`;
+        el.innerHTML = `<div class="empty-state"><div class="icon"></div><p>No bookings found.</p><a href="search.html" class="btn btn-primary mt-3">Find a Worker</a></div>`;
         return;
       }
       el.innerHTML = items.map(b => `
@@ -159,7 +159,7 @@
           </div>
           <div class="flex gap-2 mt-2" style="flex-wrap:wrap;">
             <a href="provider.html?id=${b.provider_id}" class="btn btn-secondary btn-sm">View Provider</a>
-            ${b.status === 'completed' ? `<button class="btn btn-primary btn-sm" onclick="openReviewModal(${b.id}, ${b.provider_id}, '${b.provider_name}')">⭐ Leave Review</button>` : ''}
+            ${b.status === 'completed' ? `<button class="btn btn-primary btn-sm" onclick="openReviewModal(${b.id}, ${b.provider_id}, '${b.provider_name}')">Leave Review</button>` : ''}
           </div>
         </div>`).join('');
     }
@@ -198,7 +198,7 @@
           text: document.getElementById('review-text').value,
         });
         closeReviewModal();
-        showToast('Review submitted! Thank you ⭐', 'success');
+        showToast('Review submitted! Thank you', 'success');
         loadBookings();
       } catch (e) {
         errEl.textContent = e.message || 'Failed to submit review.';

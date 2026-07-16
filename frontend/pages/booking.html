@@ -15,7 +15,7 @@
     .confirm-row { display: flex; justify-content: space-between; padding: .75rem 0; border-bottom: 1px solid var(--border); font-size: .95rem; }
     .confirm-row:last-child { border-bottom: none; }
     .confirm-row span:first-child { color: var(--text-muted); }
-    .success-icon { font-size: 4rem; margin-bottom: 1rem; animation: bounce 1s ease; }
+    .success-icon { font-size: 3rem; font-weight: 700; color: var(--success); margin-bottom: 1rem; }
     .booking-id { font-size: 1.5rem; font-weight: 700; color: var(--primary); font-family: monospace; letter-spacing: .1em; }
   </style>
 </head>
@@ -92,28 +92,25 @@
 
       <!-- Step 2: Confirm -->
       <div class="step-content card" id="step-2">
-        <h3 style="margin-bottom:1.5rem;">Confirm Booking</h3>
+        <h3 style="margin-bottom:1.5rem;">Review &amp; Confirm</h3>
         <div id="confirm-rows"></div>
         <div class="divider"></div>
         <div class="flex-between" style="font-size:1.05rem;">
           <strong>Estimated Total</strong>
           <strong style="color:var(--primary);" id="confirm-total">—</strong>
         </div>
-        <div class="alert alert-info mt-3" style="font-size:.85rem;">
-          💡 Final amount will be confirmed by the provider before work begins.
-        </div>
         <div id="step2-error" class="alert alert-error mt-2" style="display:none;"></div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-top:1.5rem;">
           <button class="btn btn-secondary" onclick="goStep(1)">← Back</button>
-          <button id="confirm-btn" class="btn btn-primary" onclick="submitBooking()">Confirm Booking</button>
+          <button id="confirm-btn" class="btn btn-primary" onclick="submitBooking()">Send Booking Request</button>
         </div>
       </div>
 
       <!-- Step 3: Success -->
       <div class="step-content card" id="step-3" style="text-align:center;">
-        <div class="success-icon">🎉</div>
-        <h2 style="color:var(--success);">Booking Confirmed!</h2>
-        <p style="margin-top:.75rem;">Your booking has been sent to the provider. You'll be notified when they confirm.</p>
+        <div class="success-icon">Done!</div>
+        <h2 style="color:var(--success);">Booking Request Sent</h2>
+        <p style="margin-top:.75rem;">Your job request has been submitted. The worker will review it and accept or decline from their dashboard.</p>
         <div style="margin:1.5rem 0;">
           <div style="font-size:.85rem;color:var(--text-muted);margin-bottom:.5rem;">Booking Reference</div>
           <div class="booking-id" id="booking-ref"></div>
@@ -131,12 +128,14 @@
   <script src="../assets/js/api.js"></script>
   <script src="../assets/js/auth.js"></script>
   <script>
+    // Auth guard — redirect immediately if not logged in or wrong role
     if (!Auth.isLoggedIn()) {
       Auth.saveRedirect(Auth.currentReturnPath());
       window.location.href = Auth.loginUrl(Auth.currentReturnPath());
     } else if (!Auth.isHomeowner()) {
       window.location.href = 'provider-dash.html';
-    } else {
+    }
+
     const providerId = new URLSearchParams(location.search).get('provider');
     if (!providerId) window.location.href = 'search.html';
 
@@ -215,7 +214,7 @@
       const btn = document.getElementById('confirm-btn');
       const errEl = document.getElementById('step2-error');
       errEl.style.display = 'none';
-      btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Confirming…';
+      btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Sending…';
 
       try {
         const booking = await api.createBooking({
@@ -227,7 +226,7 @@
         });
         document.getElementById('booking-ref').textContent = `#FIND-${String(booking.id).padStart(5,'0')}`;
         goStep(3);
-        showToast('Booking confirmed! 🎉', 'success');
+        showToast('Booking request sent!', 'success');
       } catch (e) {
         if (e.message.includes('401') || e.message.includes('Not authenticated')) {
           errEl.textContent = 'Please log in to book a service.';
@@ -235,12 +234,11 @@
           errEl.textContent = e.message || 'Failed to create booking.';
         }
         errEl.style.display = 'flex';
-        btn.disabled = false; btn.textContent = 'Confirm Booking';
+        btn.disabled = false; btn.textContent = 'Send Booking Request';
       }
     }
 
     loadProvider();
-    } // end auth guard
   </script>
 </body>
 </html>

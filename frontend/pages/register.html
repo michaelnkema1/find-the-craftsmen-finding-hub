@@ -47,12 +47,12 @@
     <!-- Role picker -->
     <div class="role-picker" id="role-picker">
       <div class="role-option selected" id="role-homeowner" onclick="selectRole('homeowner')">
-        <div class="role-icon">🏠</div>
+        <div class="role-icon"></div>
         <div class="role-name">Homeowner</div>
         <div class="role-desc">I need skilled workers</div>
       </div>
       <div class="role-option" id="role-provider" onclick="selectRole('provider')">
-        <div class="role-icon">🔧</div>
+        <div class="role-icon"></div>
         <div class="role-name">Provider</div>
         <div class="role-desc">I offer skilled services</div>
       </div>
@@ -77,17 +77,17 @@
         <div class="form-group">
           <label class="form-label">Home Location <span style="color:var(--text-subtle);font-weight:400;">(optional)</span></label>
           <div class="loc-tabs">
-            <button type="button" class="loc-tab active" id="tab-gps"    onclick="switchLocMode('gps')">📍 Use My GPS</button>
-            <button type="button" class="loc-tab"        id="tab-manual" onclick="switchLocMode('manual')">✏️ Enter Address</button>
+            <button type="button" class="loc-tab active" id="tab-gps"    onclick="switchLocMode('gps')">Use My GPS</button>
+            <button type="button" class="loc-tab"        id="tab-manual" onclick="switchLocMode('manual')">Enter Address</button>
           </div>
 
           <!-- GPS panel -->
           <div class="loc-panel active" id="panel-gps">
             <button type="button" class="gps-capture-btn" id="gps-btn" onclick="captureGPS()">
-              📡 Detect My Current Location
+              Detect My Current Location
             </button>
             <div id="gps-result" style="display:none;" class="loc-result success">
-              <span>📍</span><span id="gps-text"></span>
+              <span></span><span id="gps-text"></span>
             </div>
           </div>
 
@@ -97,7 +97,7 @@
               <input type="text" id="address-input" class="form-input"
                 placeholder="e.g. 15 Ring Road, Accra" />
               <button type="button" class="btn btn-secondary btn-sm" id="geocode-btn" onclick="geocodeAddress()">
-                🔍 Find
+                Find
               </button>
             </div>
             <div id="geocode-result" style="display:none;" class="loc-result mt-1"></div>
@@ -177,13 +177,13 @@
             showGPSResult('success', `${capturedLat.toFixed(5)}, ${capturedLng.toFixed(5)}${acc}`);
           }
           btn.disabled = false;
-          btn.innerHTML = '✅ Location Captured — Click to Re-detect';
+          btn.innerHTML = 'Location Captured — Click to Re-detect';
         },
         (err) => {
           const msgs = { 1: 'Permission denied — please allow location access.', 2: 'Location unavailable.', 3: 'Timed out.' };
           showGPSResult('error', msgs[err.code] || 'Failed to get location.');
           btn.disabled = false;
-          btn.innerHTML = '📡 Detect My Current Location';
+          btn.innerHTML = 'Detect My Current Location';
         },
         { enableHighAccuracy: true, timeout: 10000 }
       );
@@ -220,15 +220,15 @@
         capturedAddress = data[0].display_name;
 
         resultEl.className = 'loc-result success mt-1';
-        resultEl.innerHTML = `<span>✅</span><span>${capturedAddress}</span>`;
+        resultEl.innerHTML = `<span></span><span>${capturedAddress}</span>`;
         resultEl.style.display = 'flex';
       } catch (e) {
         capturedLat = null; capturedLng = null; capturedAddress = null;
         resultEl.className = 'loc-result error mt-1';
-        resultEl.innerHTML = `<span>❌</span><span>${e.message}</span>`;
+        resultEl.innerHTML = `<span></span><span>${e.message}</span>`;
         resultEl.style.display = 'flex';
       }
-      btn.disabled = false; btn.innerHTML = '🔍 Find';
+      btn.disabled = false; btn.innerHTML = 'Find';
     }
 
     // Allow Enter key to trigger geocode in address field
@@ -258,7 +258,7 @@
       try {
         const data = await api.register(payload);
         Auth.save(data.access_token, data.user);
-        showToast('Account created! Welcome to Find 🎉', 'success');
+        showToast('Account created! Welcome to Find', 'success');
         setTimeout(() => {
           const fallback = selectedRole === 'provider'
             ? _pages('provider-dash.html')

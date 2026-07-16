@@ -44,7 +44,7 @@
     <!-- Sidebar filters -->
     <div class="search-sidebar">
       <div>
-        <h3>🔍 Find Workers</h3>
+        <h3>Find Workers</h3>
         <p style="font-size:.85rem; margin-top:.3rem;" id="gps-status">Locating you…</p>
       </div>
 
@@ -75,7 +75,7 @@
         </label>
       </div>
 
-      <button id="search-btn" class="btn btn-primary" style="width:100%;" disabled>🔍 Search</button>
+      <button id="search-btn" class="btn btn-primary" style="width:100%;" disabled>Search</button>
       <div id="result-count" style="font-size:.85rem; color:var(--text-muted); text-align:center;"></div>
     </div>
 
@@ -85,12 +85,12 @@
         <!-- GPS loading overlay -->
         <div id="gps-overlay" style="position:absolute;inset:0;z-index:999;background:rgba(6,11,24,.85);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1rem;border-radius:var(--radius-lg);">
           <div class="spinner" style="width:36px;height:36px;border-width:4px;"></div>
-          <p style="font-size:.95rem;font-weight:600;">📍 Getting your location…</p>
+          <p style="font-size:.95rem;font-weight:600;">Getting your location…</p>
           <p style="font-size:.8rem;color:var(--text-muted);">Please allow location access when prompted</p>
         </div>
         <div id="map"></div>
         <!-- Re-center button -->
-        <button id="recenter-btn" onclick="recenterMap()" title="Re-center on my location" style="position:absolute;bottom:1rem;right:1rem;z-index:500;width:40px;height:40px;border-radius:50%;background:var(--surface);border:1px solid var(--border-amber);color:var(--primary);font-size:1.1rem;cursor:pointer;display:none;box-shadow:var(--shadow-md);">📍</button>
+        <button id="recenter-btn" onclick="recenterMap()" title="Re-center on my location" style="position:absolute;bottom:1rem;right:1rem;z-index:500;width:40px;height:40px;border-radius:50%;background:var(--surface);border:1px solid var(--border-amber);color:var(--primary);font-size:1.1rem;cursor:pointer;display:none;box-shadow:var(--shadow-md);">+</button>
       </div>
       <div class="results-panel">
         <div class="results-header">
@@ -140,7 +140,7 @@
       userMarker = L.circleMarker([lat, lng], {
         radius: 11, color: '#F59E0B', fillColor: '#F59E0B',
         fillOpacity: 0.55, weight: 3
-      }).addTo(map).bindPopup('<b>📍 Your Location</b>');
+      }).addTo(map).bindPopup('<b>Your Location</b>');
     }
 
     function recenterMap() {
@@ -165,7 +165,7 @@
           <div style="display:flex;align-items:center;gap:.4rem;font-size:.85rem;">
             <span style="color:#F59E0B;">★</span>${p.rating_avg} (${p.total_reviews} reviews)
           </div>
-          ${p.distance_km != null ? `<div style="font-size:.78rem;color:#94A3B8;margin-top:.3rem;">📍 ${p.distance_km} km away</div>` : ''}
+          ${p.distance_km != null ? `<div style="font-size:.78rem;color:#94A3B8;margin-top:.3rem;">${p.distance_km} km away</div>` : ''}
           <a href="provider.html?id=${p.id}" style="display:inline-block;margin-top:.75rem;padding:.35rem .75rem;background:#F59E0B;color:#000;border-radius:9999px;font-size:.8rem;font-weight:700;">View Profile</a>
         </div>
       `);
@@ -175,7 +175,7 @@
     // ── Provider cards ─────────────────────────────────────────────────────────
     function renderCard(p) {
       const dist = p.distance_km != null
-        ? `<span style="color:var(--text-muted);font-size:.8rem;">📍 ${p.distance_km} km away</span>` : '';
+        ? `<span style="color:var(--text-muted);font-size:.8rem;">${p.distance_km} km away</span>` : '';
       return `
         <div class="provider-card">
           <div class="flex gap-2 mb-2">
@@ -242,7 +242,7 @@
         showToast('Search failed: ' + e.message, 'error');
       }
 
-      btn.disabled = false; btn.textContent = '🔍 Search';
+      btn.disabled = false; btn.textContent = 'Search';
     }
 
     // ── GPS Boot (waits for location BEFORE map init) ──────────────────────────
@@ -251,14 +251,14 @@
       userLng = pos.coords.longitude;
       const acc = pos.coords.accuracy ? Math.round(pos.coords.accuracy) + 'm accuracy' : '';
       document.getElementById('gps-status').innerHTML =
-        `<span style="color:var(--success);">📍 Live GPS</span>${acc ? ' · ' + acc : ''}`;
+        `<span style="color:var(--success);">Live GPS</span>${acc ? ' · ' + acc : ''}`;
       boot();
     }
 
     function onLocationError(err) {
       const msgs = { 1: 'Location access denied', 2: 'Location unavailable', 3: 'Location timed out' };
       document.getElementById('gps-status').innerHTML =
-        `<span style="color:var(--text-muted);">📍 ${msgs[err?.code] || 'Using default area'}</span>`;
+        `<span style="color:var(--text-muted);">${msgs[err?.code] || 'Using default area'}</span>`;
       showToast('Using Accra, Ghana as default location', 'info');
       boot();
     }
