@@ -10,7 +10,6 @@
     /* Landing-specific styles */
     .hero { position: relative; min-height: 100vh; display: flex; align-items: center; overflow: hidden; padding-top: 80px; }
     .hero-content { position: relative; z-index: 1; max-width: 700px; }
-    .hero-eyebrow { display: inline-flex; align-items: center; gap: .5rem; padding: .4rem 1rem; border-radius: var(--radius-full); background: rgba(245,158,11,.1); border: 1px solid var(--border-amber); color: var(--primary); font-size: .85rem; font-weight: 600; margin-bottom: 1.5rem; }
     .hero-search { display: flex; gap: .75rem; margin-top: 2.5rem; max-width: 560px; }
     .hero-search .form-input { flex: 1; }
     .floating-cards { position: absolute; right: 0; top: 50%; transform: translateY(-50%); z-index: 1; display: flex; flex-direction: column; gap: 1rem; }
@@ -20,7 +19,6 @@
     .services-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; }
     .service-item { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.75rem 1.25rem; text-align: center; cursor: pointer; transition: var(--t); }
     .service-item:hover { border-color: var(--border-amber); background: var(--surface-2); transform: translateY(-4px); }
-    .service-icon { font-size: 2rem; margin-bottom: .75rem; }
     .service-name { font-weight: 600; font-size: .95rem; }
     .service-count { font-size: .8rem; color: var(--text-muted); margin-top: .25rem; }
     .how-step { display: flex; gap: 1.5rem; align-items: flex-start; }
@@ -68,7 +66,6 @@
     <div class="hero-grid"></div>
     <div class="container">
       <div class="hero-content fade-up">
-        <div class="hero-eyebrow">Verified Handyworkers Near You</div>
         <h1>Find Skilled Workers <span class="gradient-text">Instantly</span></h1>
         <p style="font-size:1.2rem; margin-top:1rem; max-width:560px;">Connect with verified, GPS-matched local professionals for plumbing, electrical, cleaning, carpentry and more — in minutes.</p>
         <div class="hero-search">
@@ -134,15 +131,15 @@
       <div class="text-center mb-3">
         <h2>Browse by <span class="gradient-text">Service</span></h2>
         <p style="margin-top:.75rem;">Find the right professional for any domestic task</p>
-      </div>
-        <div class="service-item" onclick="goSearch('Plumber')"><div class="service-icon"></div><div class="service-name">Plumbing</div><div class="service-count">240+ workers</div></div>
-        <div class="service-item" onclick="goSearch('Electrician')"><div class="service-icon"></div><div class="service-name">Electrical</div><div class="service-count">185+ workers</div></div>
-        <div class="service-item" onclick="goSearch('Cleaner')"><div class="service-icon"></div><div class="service-name">Cleaning</div><div class="service-count">320+ workers</div></div>
-        <div class="service-item" onclick="goSearch('Carpenter')"><div class="service-icon"></div><div class="service-name">Carpentry</div><div class="service-count">140+ workers</div></div>
-        <div class="service-item" onclick="goSearch('Painter')"><div class="service-icon"></div><div class="service-name">Painting</div><div class="service-count">95+ workers</div></div>
-        <div class="service-item" onclick="goSearch('Laundry')"><div class="service-icon"></div><div class="service-name">Laundry</div><div class="service-count">110+ workers</div></div>
-        <div class="service-item" onclick="goSearch('HVAC')"><div class="service-icon"></div><div class="service-name">HVAC</div><div class="service-count">78+ workers</div></div>
-        <div class="service-item" onclick="goSearch('Landscaping')"><div class="service-icon"></div><div class="service-name">Landscaping</div><div class="service-count">62+ workers</div></div>
+      <div class="services-grid">
+        <div class="service-item" onclick="goSearch('Plumber')"><div class="service-name">Plumbing</div><div class="service-count">240+ workers</div></div>
+        <div class="service-item" onclick="goSearch('Electrician')"><div class="service-name">Electrical</div><div class="service-count">185+ workers</div></div>
+        <div class="service-item" onclick="goSearch('Cleaner')"><div class="service-name">Cleaning</div><div class="service-count">320+ workers</div></div>
+        <div class="service-item" onclick="goSearch('Carpenter')"><div class="service-name">Carpentry</div><div class="service-count">140+ workers</div></div>
+        <div class="service-item" onclick="goSearch('Painter')"><div class="service-name">Painting</div><div class="service-count">95+ workers</div></div>
+        <div class="service-item" onclick="goSearch('Laundry')"><div class="service-name">Laundry</div><div class="service-count">110+ workers</div></div>
+        <div class="service-item" onclick="goSearch('HVAC')"><div class="service-name">HVAC</div><div class="service-count">78+ workers</div></div>
+        <div class="service-item" onclick="goSearch('Landscaping')"><div class="service-name">Landscaping</div><div class="service-count">62+ workers</div></div>
       </div>
     </div>
   </section>

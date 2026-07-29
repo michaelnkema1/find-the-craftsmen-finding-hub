@@ -13,7 +13,6 @@
     .role-option { border:2px solid var(--border); border-radius:var(--radius-md); padding:1.25rem; text-align:center; cursor:pointer; transition:var(--t); }
     .role-option:hover { border-color:var(--border-amber); }
     .role-option.selected { border-color:var(--primary); background:rgba(245,158,11,.08); }
-    .role-option .role-icon { font-size:1.75rem; margin-bottom:.5rem; }
     .role-option .role-name { font-weight:600; font-size:.95rem; }
     .role-option .role-desc { font-size:.78rem; color:var(--text-muted); margin-top:.25rem; }
 
@@ -47,12 +46,10 @@
     <!-- Role picker -->
     <div class="role-picker" id="role-picker">
       <div class="role-option selected" id="role-homeowner" onclick="selectRole('homeowner')">
-        <div class="role-icon"></div>
         <div class="role-name">Homeowner</div>
         <div class="role-desc">I need skilled workers</div>
       </div>
       <div class="role-option" id="role-provider" onclick="selectRole('provider')">
-        <div class="role-icon"></div>
         <div class="role-name">Provider</div>
         <div class="role-desc">I offer skilled services</div>
       </div>
@@ -87,7 +84,7 @@
               Detect My Current Location
             </button>
             <div id="gps-result" style="display:none;" class="loc-result success">
-              <span></span><span id="gps-text"></span>
+              <span id="gps-text"></span>
             </div>
           </div>
 
@@ -220,12 +217,12 @@
         capturedAddress = data[0].display_name;
 
         resultEl.className = 'loc-result success mt-1';
-        resultEl.innerHTML = `<span></span><span>${capturedAddress}</span>`;
+        resultEl.innerHTML = `<span>${capturedAddress}</span>`;
         resultEl.style.display = 'flex';
       } catch (e) {
         capturedLat = null; capturedLng = null; capturedAddress = null;
         resultEl.className = 'loc-result error mt-1';
-        resultEl.innerHTML = `<span></span><span>${e.message}</span>`;
+        resultEl.innerHTML = `<span>${e.message}</span>`;
         resultEl.style.display = 'flex';
       }
       btn.disabled = false; btn.innerHTML = 'Find';

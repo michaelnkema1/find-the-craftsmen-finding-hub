@@ -95,11 +95,17 @@ function skillTags(skills = '') {
   ).join('');
 }
 
-/* Status badge */
 function statusBadge(status) {
-  const map = { pending: 'badge-pending', confirmed: 'badge-confirmed',
-    in_progress: 'badge-progress', completed: 'badge-completed', cancelled: 'badge-cancelled' };
-  return `<span class="badge ${map[status] || ''}">${status.replace('_', ' ')}</span>`;
+  const labels = {
+    pending: 'Pending', confirmed: 'Confirmed', in_progress: 'In Progress',
+    provider_done: 'Awaiting Your Confirmation', completed: 'Completed', cancelled: 'Cancelled'
+  };
+  const map = {
+    pending: 'badge-pending', confirmed: 'badge-confirmed',
+    in_progress: 'badge-progress', provider_done: 'badge-progress',
+    completed: 'badge-completed', cancelled: 'badge-cancelled'
+  };
+  return `<span class="badge ${map[status] || ''}">${labels[status] || status}</span>`;
 }
 
 /* Format date */

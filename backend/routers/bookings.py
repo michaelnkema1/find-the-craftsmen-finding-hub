@@ -9,11 +9,12 @@ router = APIRouter()
 HOMEOWNER_TRANSITIONS = {
     "pending": {"cancelled"},
     "confirmed": {"cancelled"},
+    "provider_done": {"completed"},   # homeowner confirms work is finished
 }
 PROVIDER_TRANSITIONS = {
     "pending": {"confirmed", "cancelled"},
-    "confirmed": {"in_progress", "cancelled"},
-    "in_progress": {"completed"},
+    "confirmed": {"in_progress", "provider_done", "cancelled"},
+    "in_progress": {"provider_done"},  # provider marks their side done
 }
 
 
@@ -99,9 +100,9 @@ def update_booking_status(
     current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    allowed = {"pending", "confirmed", "in_progress", "completed", "cancelled"}
-    if body.status not in allowed:
-        raise HTTPException(status_code=400, detail=f"Status must be one of {allowed}")
+    allowed_statuses = {"pending", "confirmed", "in_progress", "provider_done", "completed", "cancelled"}
+    if body.status not in allowed_statuses:
+        raise HTTPException(status_code=400, detail=f"Status must be one of {allowed_statuses}")
 
     booking = db.query(models.Booking).filter(models.Booking.id == booking_id).first()
     if not booking:
@@ -130,7 +131,8 @@ def update_booking_status(
     previous_status = booking.status
     booking.status = body.status
 
-    if body.status == "completed" and previous_status != "completed":
+    # Increment total_jobs only when homeowner confirms completion
+    if body.status == "completed" and previous_status == "provider_done":
         booking.provider.total_jobs += 1
 
     db.commit()
