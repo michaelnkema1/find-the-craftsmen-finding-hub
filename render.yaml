@@ -21,10 +21,12 @@ services:
         value: "*"
 
   # Frontend Static Site
-  - type: static
-    name: find-frontend
+  - type: web
+    name: find
+    env: static
     staticPublishPath: ./frontend
     region: oregon
+    plan: free
     routes:
       - type: rewrite
         source: /*
