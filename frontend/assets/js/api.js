@@ -17,7 +17,15 @@ const api = {
     try {
       const res = await fetch(`${API_BASE}${path}`, opts);
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.detail || `HTTP ${res.status}`);
+      if (!res.ok) {
+        if (res.status === 401 && auth && !path.includes('/auth/login')) {
+          if (typeof Auth !== 'undefined' && Auth.logout) {
+            Auth.logout();
+            return;
+          }
+        }
+        throw new Error(data.detail || `HTTP ${res.status}`);
+      }
       return data;
     } catch (e) {
       throw e;
@@ -54,6 +62,11 @@ const api = {
   /* Reviews */
   createReview:        (body)    => api.post('/reviews', body),
   getProviderReviews:  (id)      => api.get(`/reviews/provider/${id}`),
+
+  /* Admin */
+  getAdminStats:     ()                 => api.get('/admin/stats'),
+  getAdminProviders: ()                 => api.get('/admin/providers'),
+  verifyProvider:    (id, is_verified)  => api.patch(`/admin/providers/${id}/verify`, { is_verified }),
 };
 
 /* Toast helper */

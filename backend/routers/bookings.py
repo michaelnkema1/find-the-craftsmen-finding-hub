@@ -48,6 +48,12 @@ def create_booking(
     if not provider:
         raise HTTPException(status_code=404, detail="Provider not found")
 
+    if not provider.is_verified:
+        raise HTTPException(
+            status_code=400,
+            detail="This worker is pending admin verification and cannot be booked yet."
+        )
+
     total = None
     if provider.hourly_rate and body.estimated_hours:
         total = round(provider.hourly_rate * body.estimated_hours, 2)
