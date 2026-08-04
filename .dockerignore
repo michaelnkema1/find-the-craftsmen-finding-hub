@@ -1,0 +1,8 @@
+.git
+.gitignore
+.venv
+__pycache__
+*.db
+*.log
+README.md
+start.sh

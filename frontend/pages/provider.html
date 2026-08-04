@@ -156,18 +156,27 @@
         // Hero
         document.getElementById('p-avatar').textContent = avatarInitials(p.name);
         document.getElementById('p-name').textContent = p.name;
-        if (p.is_verified) document.getElementById('p-verified').style.display = 'inline-flex';
-        document.getElementById('p-stars').innerHTML = renderStars(p.rating_avg);
-        document.getElementById('p-rating').textContent = p.rating_avg;
-        document.getElementById('p-reviews-count').textContent = `(${p.total_reviews} reviews)`;
-        document.getElementById('p-avail').innerHTML = p.availability_status
-          ? '<span class="dot green"></span> Available Now'
-          : '<span class="dot grey"></span> Unavailable';
-        document.getElementById('p-skills').innerHTML = skillTags(p.skills || '');
-        document.getElementById('p-bio').textContent = p.bio || 'No bio provided.';
-        document.getElementById('p-rate').textContent = `₵${(p.hourly_rate || 0).toLocaleString()}`;
-        document.getElementById('p-jobs').textContent = p.total_jobs;
-        document.getElementById('book-btn').href = `booking.html?provider=${p.id}`;
+        const verifiedEl = document.getElementById('p-verified');
+        const bookBtn = document.getElementById('book-btn');
+        if (p.is_verified) {
+          verifiedEl.style.display = 'inline-flex';
+          verifiedEl.className = 'verified-badge';
+          verifiedEl.textContent = '✓ Verified';
+          bookBtn.href = `booking.html?provider=${p.id}`;
+        } else {
+          verifiedEl.style.display = 'inline-flex';
+          verifiedEl.className = 'verified-badge';
+          verifiedEl.style.cssText = 'display:inline-flex;background:rgba(245,158,11,.12);border-color:rgba(245,158,11,.3);color:var(--primary);';
+          verifiedEl.textContent = '⏳ Pending Admin Verification';
+          bookBtn.removeAttribute('href');
+          bookBtn.className = 'btn btn-secondary';
+          bookBtn.style.cssText = 'opacity:.6;cursor:not-allowed;text-align:center;';
+          bookBtn.textContent = 'Pending Verification';
+          bookBtn.onclick = (e) => {
+            e.preventDefault();
+            showToast('This worker is pending admin verification and cannot be booked yet.', 'info');
+          };
+        }
 
         // Stats
         document.getElementById('s-jobs').textContent = p.total_jobs;

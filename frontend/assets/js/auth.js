@@ -11,6 +11,8 @@ const Auth = {
   isProvider:  () => Auth.getUser()?.role === 'provider',
   isHomeowner: () => Auth.getUser()?.role === 'homeowner',
 
+  isAdmin:     () => Auth.getUser()?.role === 'admin',
+
   save(token, user) {
     localStorage.setItem('find_token', token);
     localStorage.setItem('find_user', JSON.stringify(user));
@@ -24,6 +26,7 @@ const Auth = {
   },
 
   dashboardUrl(user = Auth.getUser()) {
+    if (user?.role === 'admin') return _pages('admin-dash.html');
     return user?.role === 'provider'
       ? _pages('provider-dash.html')
       : _pages('homeowner-dash.html');
@@ -87,6 +90,16 @@ const Auth = {
     return true;
   },
 
+  requireAdmin() {
+    if (!Auth.requireAuth()) return false;
+    if (!Auth.isAdmin()) {
+      const user = Auth.getUser();
+      window.location.href = user ? Auth.dashboardUrl(user) : Auth.loginUrl();
+      return false;
+    }
+    return true;
+  },
+
   requireRole(role) {
     const user = Auth.getUser();
     if (!user || user.role !== role) {
@@ -98,7 +111,9 @@ const Auth = {
 
   /** Use after login/register to land on the intended page. */
   redirectAfterAuth(user) {
-    const fallback = user.role === 'provider'
+    const fallback = user.role === 'admin'
+      ? _pages('admin-dash.html')
+      : user.role === 'provider'
       ? _pages('provider-dash.html')
       : _pages('homeowner-dash.html');
     window.location.href = Auth.consumeRedirect(fallback);

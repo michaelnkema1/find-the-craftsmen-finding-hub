@@ -124,6 +124,19 @@ db.query(models.Provider).delete()
 db.query(models.User).delete()
 db.commit()
 
+# Create Admin
+admin_email = "admin@find.com"
+admin_user = models.User(
+    email=encrypt_field(admin_email),
+    email_index=email_index(admin_email),
+    password_hash=hash_password("admin123"),
+    name="System Administrator",
+    role="admin",
+)
+db.add(admin_user)
+db.flush()
+print(f"  + Admin:     System Administrator <{admin_email}>")
+
 # Create homeowners
 ho_users = []
 for email, name, lat, lng in HOMEOWNERS:
@@ -192,6 +205,7 @@ for idx, (prov_user, prov) in enumerate(prov_records):
 
 db.commit()
 print("\n✅ Seed complete!")
-print("\nDemo credentials (password for all: demo1234)")
-print("  Homeowners : sarah@demo.com | marcus@demo.com")
-print("  Providers  : james@demo.com | amara@demo.com | david@demo.com | grace@demo.com | emmanuel@demo.com")
+print("\nDemo credentials:")
+print("  Admin      : admin@find.com | admin123")
+print("  Homeowners : sarah@demo.com | marcus@demo.com (password: demo1234)")
+print("  Providers  : james@demo.com | amara@demo.com | david@demo.com | grace@demo.com | emmanuel@demo.com (password: demo1234)")

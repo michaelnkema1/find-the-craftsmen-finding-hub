@@ -1,0 +1,38 @@
+services:
+  # Backend API Service
+  - type: web
+    name: find-backend
+    env: docker
+    dockerContext: ./backend
+    dockerfilePath: ./backend/Dockerfile
+    region: oregon
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: find-db
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+      - key: AES_KEY
+        value: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+      - key: CORS_ORIGINS
+        value: "*"
+
+  # Frontend Static Site
+  - type: static
+    name: find-frontend
+    staticPublishPath: ./frontend
+    region: oregon
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+
+databases:
+  - name: find-db
+    databaseName: find_db
+    user: find_user
+    region: oregon
+    plan: free

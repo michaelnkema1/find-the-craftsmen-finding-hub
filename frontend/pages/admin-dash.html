@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Dashboard — Find</title>
+  <link rel="stylesheet" href="../assets/css/main.css" />
+  <style>
+    body { background: var(--bg); display: flex; min-height: 100vh; }
+    .dash-layout { display: flex; width: 100%; min-height: 100vh; }
+    .dash-sidebar {
+      width: 260px; background: var(--surface); border-right: 1px solid var(--border);
+      padding: 1.5rem; display: flex; flex-direction: column; position: fixed; top: 0; bottom: 0; left: 0; z-index: 100;
+    }
+    .dash-main { margin-left: 260px; flex: 1; padding: 2rem; min-height: 100vh; }
+    .admin-badge {
+      display: inline-block; padding: .2rem .6rem; border-radius: var(--radius-full);
+      background: rgba(245,158,11,.15); border: 1px solid var(--border-amber); color: var(--primary);
+      font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; margin-top: .4rem;
+    }
+    .provider-row {
+      display: grid; grid-template-columns: 2fr 1.5fr 1fr 1fr 1.2fr 1.2fr; gap: 1rem;
+      align-items: center; padding: 1rem 1.25rem; border-bottom: 1px solid var(--border);
+      transition: var(--t);
+    }
+    .provider-row:hover { background: var(--surface-2); }
+    .status-pill {
+      display: inline-flex; align-items: center; gap: .35rem; padding: .25rem .75rem;
+      border-radius: var(--radius-full); font-size: .8rem; font-weight: 600;
+    }
+    .status-pill.verified { background: rgba(16,185,129,.12); color: #10B981; border: 1px solid rgba(16,185,129,.25); }
+    .status-pill.pending  { background: rgba(245,158,11,.12); color: #F59E0B; border: 1px solid rgba(245,158,11,.25); }
+    .search-bar { max-width: 360px; position: relative; }
+    .search-bar input { width: 100%; padding: .6rem 1rem; border-radius: var(--radius-md); border: 1px solid var(--border); background: var(--surface); color: var(--text); font-size: .9rem; }
+    @media (max-width: 1024px) {
+      .dash-sidebar { display: none; }
+      .dash-main { margin-left: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="dash-layout">
+    <!-- Sidebar -->
+    <aside class="dash-sidebar">
+      <div class="sidebar-logo mb-3">
+        <a href="../index.html" style="font-size:1.5rem;font-weight:700;background:linear-gradient(135deg,var(--primary),#FBBF24);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Find.</a>
+        <div><span class="admin-badge">Admin Portal</span></div>
+      </div>
+      <nav class="sidebar-nav">
+        <button class="sidebar-link active" onclick="showPanel('handymen', this)">Handymen Verification</button>
+        <button class="sidebar-link" onclick="showPanel('stats', this)">Platform Analytics</button>
+      </nav>
+      <div style="border-top:1px solid var(--border); padding-top:1rem; margin-top:auto;">
+        <div id="sb-admin-name" style="font-weight:600; padding:.5rem 1rem;font-size:.9rem;">Administrator</div>
+        <button class="sidebar-link" onclick="Auth.logout()" style="color:var(--error);margin-top:.5rem;">Logout</button>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="dash-main">
+      <!-- Handymen Panel -->
+      <div class="tab-panel active" id="panel-handymen">
+        <div class="dash-header flex-between" style="flex-wrap:wrap;gap:1rem;">
+          <div>
+            <h2>Handymen Verifications</h2>
+            <p style="margin-top:.25rem;color:var(--text-muted);">Review and approve worker profiles before they can accept customer bookings.</p>
+          </div>
+          <div class="search-bar">
+            <input type="text" id="provider-search" placeholder="Search by name, skill, email..." oninput="onSearchInput()" />
+          </div>
+        </div>
+
+        <!-- Stat cards -->
+        <div class="grid-4 mb-3" id="stat-cards">
+          <div class="stat-card"><div><div class="stat-value" id="st-total">0</div><div class="stat-label">Total Handymen</div></div></div>
+          <div class="stat-card"><div><div class="stat-value" style="color:var(--success);" id="st-verified">0</div><div class="stat-label">Verified Workers</div></div></div>
+          <div class="stat-card"><div><div class="stat-value" style="color:var(--primary);" id="st-pending">0</div><div class="stat-label">Pending Verification</div></div></div>
+          <div class="stat-card"><div><div class="stat-value" id="st-bookings">0</div><div class="stat-label">Total Bookings</div></div></div>
+        </div>
+
+        <!-- Filter tabs -->
+        <div class="tabs mb-3" style="max-width:420px;">
+          <button class="tab-btn active" onclick="setFilter('pending', this)">Pending (<span id="count-pending">0</span>)</button>
+          <button class="tab-btn" onclick="setFilter('verified', this)">Verified (<span id="count-verified">0</span>)</button>
+          <button class="tab-btn" onclick="setFilter('all', this)">All (<span id="count-all">0</span>)</button>
+        </div>
+
+        <!-- Table -->
+        <div class="card" style="padding:0;overflow:hidden;">
+          <div class="provider-row" style="background:var(--surface-2);font-weight:600;font-size:.82rem;color:var(--text-muted);text-transform:uppercase;">
+            <span>Worker Name</span><span>Skills</span><span>Hourly Rate</span><span>Rating / Jobs</span><span>Status</span><span>Action</span>
+          </div>
+          <div id="providers-list">
+            <div style="display:flex;justify-content:center;padding:3rem;"><div class="spinner"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stats Panel -->
+      <div class="tab-panel" id="panel-stats" style="display:none;">
+        <div class="dash-header">
+          <h2>Platform Analytics</h2>
+          <p style="margin-top:.25rem;color:var(--text-muted);">High-level marketplace user metrics and booking activity.</p>
+        </div>
+        <div class="grid-3 mb-3">
+          <div class="card">
+            <div style="font-size:.85rem;color:var(--text-muted);">Total Registered Users</div>
+            <div style="font-size:2rem;font-weight:700;margin-top:.5rem;" id="an-users">0</div>
+          </div>
+          <div class="card">
+            <div style="font-size:.85rem;color:var(--text-muted);">Homeowners</div>
+            <div style="font-size:2rem;font-weight:700;margin-top:.5rem;" id="an-homeowners">0</div>
+          </div>
+          <div class="card">
+            <div style="font-size:.85rem;color:var(--text-muted);">Handymen</div>
+            <div style="font-size:2rem;font-weight:700;margin-top:.5rem;" id="an-providers">0</div>
+          </div>
+        </div>
+        <div class="grid-3 mb-3">
+          <div class="card">
+            <div style="font-size:.85rem;color:var(--text-muted);">Total Bookings</div>
+            <div style="font-size:2rem;font-weight:700;margin-top:.5rem;" id="an-bookings">0</div>
+          </div>
+          <div class="card">
+            <div style="font-size:.85rem;color:var(--text-muted);">Active Jobs</div>
+            <div style="font-size:2rem;font-weight:700;color:var(--primary);margin-top:.5rem;" id="an-active">0</div>
+          </div>
+          <div class="card">
+            <div style="font-size:.85rem;color:var(--text-muted);">Completed Jobs</div>
+            <div style="font-size:2rem;font-weight:700;color:var(--success);margin-top:.5rem;" id="an-completed">0</div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div id="toast"></div>
+
+  <script src="../assets/js/config.js"></script>
+  <script src="../assets/js/api.js"></script>
+  <script src="../assets/js/auth.js"></script>
+  <script>
+    Auth.requireAdmin();
+
+    const user = Auth.getUser();
+    if (user && document.getElementById('sb-admin-name')) {
+      document.getElementById('sb-admin-name').textContent = user.name || 'Administrator';
+    }
+
+    let allProviders = [];
+    let currentFilter = 'pending';
+    let searchQuery = '';
+
+    async function loadAdminData() {
+      try {
+        const [stats, providers] = await Promise.all([
+          api.getAdminStats(),
+          api.getAdminProviders(),
+        ]);
+        renderStats(stats);
+        allProviders = providers;
+        updateCounts();
+        renderProviders();
+      } catch (e) {
+        showToast('Failed to load admin data: ' + e.message, 'error');
+      }
+    }
+
+    function renderStats(s) {
+      document.getElementById('st-total').textContent = s.total_providers || 0;
+      document.getElementById('st-verified').textContent = s.verified_providers || 0;
+      document.getElementById('st-pending').textContent = s.pending_providers || 0;
+      document.getElementById('st-bookings').textContent = s.total_bookings || 0;
+
+      document.getElementById('an-users').textContent = s.total_users || 0;
+      document.getElementById('an-homeowners').textContent = s.total_homeowners || 0;
+      document.getElementById('an-providers').textContent = s.total_providers || 0;
+      document.getElementById('an-bookings').textContent = s.total_bookings || 0;
+      document.getElementById('an-active').textContent = s.active_bookings || 0;
+      document.getElementById('an-completed').textContent = s.completed_bookings || 0;
+    }
+
+    function updateCounts() {
+      const pending = allProviders.filter(p => !p.is_verified).length;
+      const verified = allProviders.filter(p => p.is_verified).length;
+      document.getElementById('count-pending').textContent = pending;
+      document.getElementById('count-verified').textContent = verified;
+      document.getElementById('count-all').textContent = allProviders.length;
+    }
+
+    function setFilter(f, btn) {
+      currentFilter = f;
+      document.querySelectorAll('.tabs .tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderProviders();
+    }
+
+    function onSearchInput() {
+      searchQuery = (document.getElementById('provider-search').value || '').toLowerCase().trim();
+      renderProviders();
+    }
+
+    function renderProviders() {
+      let filtered = allProviders;
+      if (currentFilter === 'pending') filtered = filtered.filter(p => !p.is_verified);
+      if (currentFilter === 'verified') filtered = filtered.filter(p => p.is_verified);
+
+      if (searchQuery) {
+        filtered = filtered.filter(p =>
+          (p.name || '').toLowerCase().includes(searchQuery) ||
+          (p.skills || '').toLowerCase().includes(searchQuery) ||
+          (p.email || '').toLowerCase().includes(searchQuery)
+        );
+      }
+
+      const listEl = document.getElementById('providers-list');
+      if (!filtered.length) {
+        listEl.innerHTML = `<div style="text-align:center;padding:3rem;color:var(--text-muted);">No handymen found matching this view.</div>`;
+        return;
+      }
+
+      listEl.innerHTML = filtered.map(p => `
+        <div class="provider-row">
+          <div>
+            <div style="font-weight:600;font-size:.95rem;">${p.name}</div>
+            <div style="font-size:.8rem;color:var(--text-muted);">${p.email}</div>
+          </div>
+          <div>
+            <div style="font-size:.85rem;">${p.skills ? skillTags(p.skills) : '<span style="color:var(--text-muted)">No skills set</span>'}</div>
+          </div>
+          <div>
+            <strong style="color:var(--primary);">&#8373;${(p.hourly_rate || 0).toLocaleString()}/hr</strong>
+          </div>
+          <div>
+            <div style="font-size:.85rem;font-weight:600;">★ ${p.rating_avg.toFixed(1)}</div>
+            <div style="font-size:.78rem;color:var(--text-muted);">${p.total_jobs} jobs completed</div>
+          </div>
+          <div>
+            ${p.is_verified
+              ? `<span class="status-pill verified">✓ Verified</span>`
+              : `<span class="status-pill pending">⏳ Pending Verification</span>`
+            }
+          </div>
+          <div>
+            ${p.is_verified
+              ? `<button class="btn btn-secondary btn-sm" style="color:var(--error);border-color:var(--error);" onclick="toggleVerify(${p.id}, false)">Revoke</button>`
+              : `<button class="btn btn-primary btn-sm" onclick="toggleVerify(${p.id}, true)">Verify Worker</button>`
+            }
+          </div>
+        </div>
+      `).join('');
+    }
+
+    async function toggleVerify(providerId, isVerified) {
+      try {
+        await api.verifyProvider(providerId, isVerified);
+        showToast(isVerified ? 'Handyman verified successfully' : 'Handyman verification revoked', isVerified ? 'success' : 'info');
+        loadAdminData();
+      } catch (e) {
+        showToast('Operation failed: ' + e.message, 'error');
+      }
+    }
+
+    function showPanel(panelName, btn) {
+      document.querySelectorAll('.tab-panel').forEach(p => p.style.display = 'none');
+      document.querySelectorAll('.sidebar-link').forEach(b => b.classList.remove('active'));
+      document.getElementById(`panel-${panelName}`).style.display = 'block';
+      if (btn) btn.classList.add('active');
+    }
+
+    document.addEventListener('DOMContentLoaded', loadAdminData);
+  </script>
+</body>
+</html>
