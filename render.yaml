@@ -20,13 +20,11 @@ services:
       - key: CORS_ORIGINS
         value: "*"
 
-  # Frontend Static Site
+  # Frontend Static Site (Served globally via Render CDN)
   - type: web
-    name: find
+    name: find-frontend
     env: static
     staticPublishPath: ./frontend
-    region: oregon
-    plan: free
     routes:
       - type: rewrite
         source: /*
