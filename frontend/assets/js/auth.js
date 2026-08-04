@@ -75,7 +75,8 @@ const Auth = {
   requireHomeowner() {
     if (!Auth.requireAuth()) return false;
     if (!Auth.isHomeowner()) {
-      window.location.href = _pages('provider-dash.html');
+      const user = Auth.getUser();
+      window.location.href = user ? Auth.dashboardUrl(user) : Auth.loginUrl();
       return false;
     }
     return true;
@@ -84,7 +85,8 @@ const Auth = {
   requireProvider() {
     if (!Auth.requireAuth()) return false;
     if (!Auth.isProvider()) {
-      window.location.href = _pages('homeowner-dash.html');
+      const user = Auth.getUser();
+      window.location.href = user ? Auth.dashboardUrl(user) : Auth.loginUrl();
       return false;
     }
     return true;
