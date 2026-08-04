@@ -213,6 +213,52 @@ This will:
 
 ---
 
+## 5b. Docker Setup (Cross-Platform: Windows, macOS, Linux)
+
+You can run the full application stack (PostgreSQL database, FastAPI backend, and Nginx frontend) seamlessly on **Windows**, **macOS**, or **Linux** using Docker Desktop or Docker Engine.
+
+### Prerequisites (All OS)
+- **Windows / macOS**: Install [Docker Desktop](https://www.docker.com/products/docker-desktop/) (ensure Docker Desktop is running).
+- **Linux**: Install [Docker Engine](https://docs.docker.com/engine/install/) & Docker Compose plugin (`sudo apt install docker-compose-v2`).
+
+---
+
+### Step-by-Step Launch (Windows PowerShell / Command Prompt / macOS / Linux)
+
+1. **Clone & Navigate to Project Directory**:
+   ```bash
+   git clone https://github.com/michaelnkema1/find-the-craftsmen-finding-hub
+   cd find
+   ```
+
+2. **Build & Start All Containers**:
+   ```bash
+   docker compose up -d --build
+   ```
+   *(On older Docker versions, use `docker-compose up -d --build`)*
+
+3. **Seed Database with Demo Accounts**:
+   - **Linux / macOS / Git Bash / PowerShell**:
+     ```bash
+     docker compose exec backend python3 seed.py --force
+     ```
+   - **Windows Command Prompt (cmd.exe)**:
+     ```cmd
+     docker compose exec backend python seed.py --force
+     ```
+
+4. **Access the Application**:
+   - **Frontend App**: http://localhost:3000
+   - **Backend API**: http://localhost:8000
+   - **Interactive API Docs (Swagger UI)**: http://localhost:8000/docs
+
+5. **Stop All Containers**:
+   ```bash
+   docker compose down
+   ```
+
+---
+
 ## 6. Environment Variables
 
 Edit `backend/.env` — copy from `backend/.env.example`:
@@ -245,49 +291,7 @@ All demo accounts share the same password: **`demo1234`**
 
 ---
 
-## 8. Project Structure
-
-```
-find/
-├── start.sh                   # One-command launcher (Linux/macOS)
-├── README.md
-├── .gitignore
-│
-├── backend/
-│   ├── main.py                # FastAPI app entry point
-│   ├── models.py              # SQLAlchemy ORM models
-│   ├── schemas.py             # Pydantic request/response schemas
-│   ├── auth.py                # JWT + bcrypt + AES-256-GCM
-│   ├── database.py            # DB engine & session factory
-│   ├── seed.py                # Demo data seeder
-│   ├── requirements.txt
-│   ├── .env.example           # Template — copy to .env
-│   └── routers/
-│       ├── users.py           # Register, login, profile
-│       ├── providers.py       # GPS search, profile update
-│       ├── bookings.py        # Create, list, status workflow
-│       └── reviews.py         # Submit & list reviews
-│
-└── frontend/
-    ├── index.html             # Landing page
-    ├── assets/
-    │   ├── css/main.css       # Dark-mode design system (Space Grotesk)
-    │   └── js/
-    │       ├── api.js         # Fetch wrapper + UI helpers
-    │       └── auth.js        # JWT guard + relative routing
-    └── pages/
-        ├── login.html
-        ├── register.html      # Role picker + GPS/address location picker
-        ├── search.html        # Live GPS map + provider discovery
-        ├── provider.html      # Profile, ratings, reviews
-        ├── booking.html       # 2-step booking wizard
-        ├── homeowner-dash.html
-        └── provider-dash.html # Earnings chart, job management
-```
-
----
-
-## 9. Common Issues
+## 8. Common Issues
 
 ### `role "username" does not exist` (Linux)
 PostgreSQL peer authentication requires a matching OS user. Use the `find_user` credentials over TCP:

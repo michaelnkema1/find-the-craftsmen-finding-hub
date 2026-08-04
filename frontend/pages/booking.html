@@ -57,6 +57,9 @@
           <div style="font-weight:700;" id="b-name">Loading…</div>
           <div style="font-size:.82rem;color:var(--text-muted);" id="b-skills"></div>
           <div style="font-size:.85rem;color:var(--primary);font-weight:600;" id="b-rate"></div>
+          <div style="font-size:.82rem;color:var(--text);margin-top:.25rem;display:none;" id="b-phone-row">
+            📞 <strong>Phone:</strong> <span id="b-phone"></span>
+          </div>
         </div>
       </div>
 
@@ -154,6 +157,10 @@
         document.getElementById('b-name').textContent = provider.name;
         document.getElementById('b-skills').textContent = provider.skills || '';
         document.getElementById('b-rate').textContent = `₵${(provider.hourly_rate||0).toLocaleString()}/hr`;
+        if (provider.phone) {
+          document.getElementById('b-phone').textContent = provider.phone;
+          document.getElementById('b-phone-row').style.display = 'block';
+        }
         updateCostPreview();
       } catch (e) {
         showToast('Failed to load provider: ' + e.message, 'error');

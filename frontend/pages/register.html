@@ -66,6 +66,10 @@
           <input id="email" type="email" class="form-input" placeholder="you@example.com" required />
         </div>
         <div class="form-group">
+          <label class="form-label">Phone / Contact Number</label>
+          <input id="phone" type="tel" class="form-input" placeholder="e.g. +233 24 123 4567" required />
+        </div>
+        <div class="form-group">
           <label class="form-label">Password</label>
           <input id="password" type="password" class="form-input" placeholder="Min. 6 characters" minlength="6" required />
         </div>
@@ -246,6 +250,7 @@
         email: document.getElementById('email').value,
         password: document.getElementById('password').value,
         name: document.getElementById('name').value,
+        phone: document.getElementById('phone').value.trim() || null,
         role: selectedRole,
         address: capturedAddress || (locMode === 'manual' ? document.getElementById('address-input').value.trim() || null : null),
         location_lat: capturedLat,
