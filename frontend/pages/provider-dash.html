@@ -156,6 +156,10 @@
                 <input id="p-name" type="text" class="form-input" />
               </div>
               <div class="form-group">
+                <label class="form-label">Phone / Contact Number</label>
+                <input id="p-phone" type="tel" class="form-input" placeholder="e.g. +233 24 123 4567" />
+              </div>
+              <div class="form-group">
                 <label class="form-label">Bio</label>
                 <textarea id="p-bio" class="form-textarea" rows="4"></textarea>
               </div>
@@ -230,6 +234,7 @@
 
           // Profile form
           document.getElementById('p-name').value = user.name;
+          document.getElementById('p-phone').value = providerData.phone || user.phone || '';
           document.getElementById('p-bio').value = providerData.bio || '';
           document.getElementById('p-skills').value = providerData.skills || '';
           document.getElementById('p-rate').value = providerData.hourly_rate || '';
@@ -382,13 +387,18 @@
       const btn = document.getElementById('save-btn');
       const msg = document.getElementById('profile-msg');
       btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Saving…';
+      const phoneVal = document.getElementById('p-phone').value.trim();
       try {
         await api.updateProvider(providerData.id, {
           bio: document.getElementById('p-bio').value,
           skills: document.getElementById('p-skills').value,
+          phone: phoneVal,
           hourly_rate: parseFloat(document.getElementById('p-rate').value) || null,
         });
-        await api.updateMe({ name: document.getElementById('p-name').value });
+        await api.updateMe({
+          name: document.getElementById('p-name').value,
+          phone: phoneVal
+        });
         msg.className = 'alert alert-success';
         msg.textContent = 'Profile updated successfully.';
         msg.style.display = 'flex';

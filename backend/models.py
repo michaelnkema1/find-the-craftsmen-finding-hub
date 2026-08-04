@@ -17,6 +17,7 @@ class User(Base):
     password_hash = Column(String, nullable=False)
     name = Column(String, nullable=False)
     role = Column(String, nullable=False)  # "homeowner" | "provider"
+    phone = Column(String, nullable=True)  # Contact phone number
     address = Column(String, nullable=True)   # Human-readable address
     location_lat = Column(Float, nullable=True)
     location_lng = Column(Float, nullable=True)
@@ -32,6 +33,7 @@ class Provider(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, unique=True)
+    phone = Column(String, nullable=True)           # Direct contact phone number
     bio = Column(Text, nullable=True)
     skills = Column(String, nullable=True)          # Comma-separated: "Plumber,Electrician"
     hourly_rate = Column(Float, nullable=True)

@@ -19,6 +19,12 @@ PROVIDER_TRANSITIONS = {
 
 
 def _booking_out(b: models.Booking) -> schemas.BookingOut:
+    prov_phone = None
+    if b.provider:
+        prov_phone = b.provider.phone or (b.provider.user.phone if b.provider.user else None)
+
+    ho_phone = b.homeowner.phone if b.homeowner else None
+
     return schemas.BookingOut(
         id=b.id,
         homeowner_id=b.homeowner_id,
@@ -31,7 +37,9 @@ def _booking_out(b: models.Booking) -> schemas.BookingOut:
         total_amount=b.total_amount,
         created_at=b.created_at,
         provider_name=b.provider.user.name if b.provider and b.provider.user else None,
+        provider_phone=prov_phone,
         homeowner_name=b.homeowner.name if b.homeowner else None,
+        homeowner_phone=ho_phone,
     )
 
 

@@ -24,10 +24,13 @@ def _build_provider_out(p: models.Provider, user_lat=None, user_lng=None) -> sch
     if user_lat is not None and user_lng is not None and p.user.location_lat and p.user.location_lng:
         distance_km = round(_haversine_km(user_lat, user_lng, p.user.location_lat, p.user.location_lng), 2)
 
+    phone_num = p.phone or (p.user.phone if p.user else None)
+
     return schemas.ProviderOut(
         id=p.id,
         user_id=p.user_id,
         name=p.user.name,
+        phone=phone_num,
         bio=p.bio,
         skills=p.skills,
         hourly_rate=p.hourly_rate,
@@ -101,7 +104,12 @@ def update_provider(
         raise HTTPException(status_code=403, detail="Not authorized")
 
     for field, value in body.model_dump(exclude_unset=True).items():
-        setattr(p, field, value)
+        if field == "phone":
+            setattr(p, "phone", value)
+            if p.user:
+                setattr(p.user, "phone", value)
+        else:
+            setattr(p, field, value)
     db.commit()
     db.refresh(p)
     return _build_provider_out(p)

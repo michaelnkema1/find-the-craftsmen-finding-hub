@@ -26,6 +26,7 @@ class AdminProviderOut(BaseModel):
     user_id: int
     name: str
     email: str
+    phone: Optional[str] = None
     bio: Optional[str] = None
     skills: Optional[str] = None
     hourly_rate: Optional[float] = None
@@ -88,6 +89,7 @@ def list_admin_providers(
             user_id=p.user_id,
             name=p.user.name if p.user else "Unknown",
             email=decrypt_field(p.user.email) if p.user else "",
+            phone=p.user.phone if p.user else None,
             bio=p.bio,
             skills=p.skills,
             hourly_rate=p.hourly_rate,
