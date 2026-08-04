@@ -9,6 +9,7 @@ class UserRegister(BaseModel):
     password: str = Field(min_length=6)
     name: str
     role: Literal["homeowner", "provider"]
+    phone: Optional[str] = None
     address: Optional[str] = None
     location_lat: Optional[float] = None
     location_lng: Optional[float] = None
@@ -24,6 +25,7 @@ class UserOut(BaseModel):
     name: str
     email: str
     role: str
+    phone: Optional[str] = None
     address: Optional[str] = None
     location_lat: Optional[float]
     location_lng: Optional[float]
@@ -41,6 +43,7 @@ class Token(BaseModel):
 
 class UserUpdate(BaseModel):
     name: Optional[str] = None
+    phone: Optional[str] = None
     address: Optional[str] = None
     location_lat: Optional[float] = None
     location_lng: Optional[float] = None
@@ -50,6 +53,7 @@ class UserUpdate(BaseModel):
 class ProviderUpdate(BaseModel):
     bio: Optional[str] = None
     skills: Optional[str] = None
+    phone: Optional[str] = None
     hourly_rate: Optional[float] = None
     availability_status: Optional[bool] = None
 
@@ -58,6 +62,7 @@ class ProviderOut(BaseModel):
     id: int
     user_id: int
     name: str
+    phone: Optional[str] = None
     bio: Optional[str]
     skills: Optional[str]
     hourly_rate: Optional[float]
@@ -100,7 +105,9 @@ class BookingOut(BaseModel):
     total_amount: Optional[float]
     created_at: datetime
     provider_name: Optional[str] = None
+    provider_phone: Optional[str] = None
     homeowner_name: Optional[str] = None
+    homeowner_phone: Optional[str] = None
 
     class Config:
         from_attributes = True

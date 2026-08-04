@@ -69,36 +69,39 @@ def _seed_all_demo_data(force=False):
                 email=encrypt_field("sarah@demo.com"),
                 email_index=hashlib.sha256(b"sarah@demo.com").hexdigest(),
                 password_hash=passw, name="Sarah Johnson", role="homeowner",
+                phone="+233 24 555 0192",
                 location_lat=5.5491, location_lng=-0.1797
             )
             ho2 = models.User(
                 email=encrypt_field("marcus@demo.com"),
                 email_index=hashlib.sha256(b"marcus@demo.com").hexdigest(),
                 password_hash=passw, name="Marcus Williams", role="homeowner",
+                phone="+233 20 555 0184",
                 location_lat=5.6057, location_lng=-0.1725
             )
             db.add_all([ho1, ho2])
             db.flush()
 
             providers_data = [
-                ("james@demo.com", "James Okafor", 5.6470, -0.1511, "Licensed plumber with 8+ years experience. Expert in pipe installations, leak repairs, and bathroom fittings.", "Plumber,Electrician", 250.0, True, 142),
-                ("amara@demo.com", "Amara Diallo", 5.5782, -0.1851, "Professional cleaning specialist. Deep cleans, post-construction cleaning, and laundry services available.", "Cleaner,Laundry", 120.0, True, 97),
-                ("david@demo.com", "David Torres", 5.6698, 0.0166, "Master carpenter and skilled painter. Custom furniture, flooring, and interior painting with 10 years in trade.", "Carpenter,Painter", 300.0, True, 218),
-                ("grace@demo.com", "Grace Adeyemi", 5.5500, -0.1500, "Certified electrician specializing in smart home installations, wiring, and HVAC maintenance.", "Electrician,HVAC", 350.0, True, 185),
-                ("emmanuel@demo.com", "Emmanuel Osei", 5.6200, -0.2100, "Expert plumber and landscaping professional. Borehole drilling, drainage systems, and garden design.", "Plumber,Landscaping", 200.0, False, 54),
+                ("james@demo.com", "James Okafor", "+233 24 123 4567", 5.6470, -0.1511, "Licensed plumber with 8+ years experience. Expert in pipe installations, leak repairs, and bathroom fittings.", "Plumber,Electrician", 250.0, True, 142),
+                ("amara@demo.com", "Amara Diallo", "+233 50 987 6543", 5.5782, -0.1851, "Professional cleaning specialist. Deep cleans, post-construction cleaning, and laundry services available.", "Cleaner,Laundry", 120.0, True, 97),
+                ("david@demo.com", "David Torres", "+233 20 456 7890", 5.6698, 0.0166, "Master carpenter and skilled painter. Custom furniture, flooring, and interior painting with 10 years in trade.", "Carpenter,Painter", 300.0, True, 218),
+                ("grace@demo.com", "Grace Adeyemi", "+233 27 321 0987", 5.5500, -0.1500, "Certified electrician specializing in smart home installations, wiring, and HVAC maintenance.", "Electrician,HVAC", 350.0, True, 185),
+                ("emmanuel@demo.com", "Emmanuel Osei", "+233 54 654 3210", 5.6200, -0.2100, "Expert plumber and landscaping professional. Borehole drilling, drainage systems, and garden design.", "Plumber,Landscaping", 200.0, False, 54),
             ]
 
-            for email, name, lat, lng, bio, skills, rate, ver, jobs in providers_data:
+            for email, name, phone, lat, lng, bio, skills, rate, ver, jobs in providers_data:
                 u = models.User(
                     email=encrypt_field(email),
                     email_index=hashlib.sha256(email.lower().encode()).hexdigest(),
                     password_hash=passw, name=name, role="provider",
+                    phone=phone,
                     location_lat=lat, location_lng=lng
                 )
                 db.add(u)
                 db.flush()
                 p = models.Provider(
-                    user_id=u.id, bio=bio, skills=skills, hourly_rate=rate,
+                    user_id=u.id, phone=phone, bio=bio, skills=skills, hourly_rate=rate,
                     is_verified=ver, availability_status=True, total_jobs=jobs,
                     rating_avg=4.8, total_reviews=12
                 )

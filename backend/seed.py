@@ -48,12 +48,13 @@ def email_index(email: str) -> str:
     return hashlib.sha256(email.lower().encode()).hexdigest()
 
 
-def make_user(email, name, role, lat, lng) -> models.User:
+def make_user(email, name, phone, role, lat, lng) -> models.User:
     return models.User(
         email=encrypt_field(email),
         email_index=email_index(email),
         password_hash=hash_password(PASSWORD),
         name=name,
+        phone=phone,
         role=role,
         location_lat=lat,
         location_lng=lng,
@@ -62,41 +63,41 @@ def make_user(email, name, role, lat, lng) -> models.User:
 
 # ── Seed data ─────────────────────────────────────────────────────────────────
 HOMEOWNERS = [
-    ("sarah@demo.com",   "Sarah Johnson",   5.5491, -0.1797),  # Osu, Accra
-    ("marcus@demo.com",  "Marcus Williams", 5.6057, -0.1725),  # Airport Residential, Accra
+    ("sarah@demo.com",   "Sarah Johnson",   "+233 24 555 0192", 5.5491, -0.1797),  # Osu, Accra
+    ("marcus@demo.com",  "Marcus Williams", "+233 20 555 0184", 5.6057, -0.1725),  # Airport Residential, Accra
 ]
 
 PROVIDERS = [
     {
-        "email": "james@demo.com", "name": "James Okafor",
+        "email": "james@demo.com", "name": "James Okafor", "phone": "+233 24 123 4567",
         "lat": 5.6470, "lng": -0.1511,  # East Legon, Accra
         "bio": "Licensed plumber with 8+ years experience. Expert in pipe installations, leak repairs, and bathroom fittings.",
         "skills": "Plumber,Electrician",
         "rate": 250.0, "verified": True, "jobs": 142,
     },
     {
-        "email": "amara@demo.com", "name": "Amara Diallo",
+        "email": "amara@demo.com", "name": "Amara Diallo", "phone": "+233 50 987 6543",
         "lat": 5.5782, "lng": -0.1851,  # Cantonments, Accra
         "bio": "Professional cleaning specialist. Deep cleans, post-construction cleaning, and laundry services available.",
         "skills": "Cleaner,Laundry",
         "rate": 120.0, "verified": True, "jobs": 97,
     },
     {
-        "email": "david@demo.com", "name": "David Torres",
+        "email": "david@demo.com", "name": "David Torres", "phone": "+233 20 456 7890",
         "lat": 5.6698, "lng": 0.0166,   # Tema, Greater Accra
         "bio": "Master carpenter and skilled painter. Custom furniture, flooring, and interior painting with 10 years in the trade.",
         "skills": "Carpenter,Painter",
         "rate": 300.0, "verified": True, "jobs": 218,
     },
     {
-        "email": "grace@demo.com", "name": "Grace Adeyemi",
+        "email": "grace@demo.com", "name": "Grace Adeyemi", "phone": "+233 27 321 0987",
         "lat": 5.5500, "lng": -0.1500,  # Labadi, Accra
         "bio": "Certified electrician specializing in smart home installations, wiring, and HVAC maintenance.",
         "skills": "Electrician,HVAC",
         "rate": 350.0, "verified": True, "jobs": 185,
     },
     {
-        "email": "emmanuel@demo.com", "name": "Emmanuel Osei",
+        "email": "emmanuel@demo.com", "name": "Emmanuel Osei", "phone": "+233 54 654 3210",
         "lat": 5.6200, "lng": -0.2100,  # Achimota, Accra
         "bio": "Expert plumber and landscaping professional. Borehole drilling, drainage systems, and garden design.",
         "skills": "Plumber,Landscaping",
@@ -131,6 +132,7 @@ admin_user = models.User(
     email_index=email_index(admin_email),
     password_hash=hash_password("admin123"),
     name="System Administrator",
+    phone="+233 30 000 0000",
     role="admin",
 )
 db.add(admin_user)
@@ -139,8 +141,8 @@ print(f"  + Admin:     System Administrator <{admin_email}>")
 
 # Create homeowners
 ho_users = []
-for email, name, lat, lng in HOMEOWNERS:
-    u = make_user(email, name, "homeowner", lat, lng)
+for email, name, phone, lat, lng in HOMEOWNERS:
+    u = make_user(email, name, phone, "homeowner", lat, lng)
     db.add(u)
     db.flush()
     ho_users.append(u)
@@ -149,12 +151,13 @@ for email, name, lat, lng in HOMEOWNERS:
 # Create providers
 prov_records = []
 for i, p_data in enumerate(PROVIDERS):
-    u = make_user(p_data["email"], p_data["name"], "provider", p_data["lat"], p_data["lng"])
+    u = make_user(p_data["email"], p_data["name"], p_data["phone"], "provider", p_data["lat"], p_data["lng"])
     db.add(u)
     db.flush()
 
     prov = models.Provider(
         user_id=u.id,
+        phone=p_data["phone"],
         bio=p_data["bio"],
         skills=p_data["skills"],
         hourly_rate=p_data["rate"],
