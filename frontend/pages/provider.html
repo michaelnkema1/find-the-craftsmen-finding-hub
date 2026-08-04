@@ -78,6 +78,9 @@
           </div>
           <div id="p-skills" class="flex gap-1 mt-2" style="flex-wrap:wrap;"></div>
           <p id="p-bio" style="margin-top:1rem; max-width:600px;"></p>
+          <div id="p-contact-row" style="margin-top:.75rem; font-size:.92rem; color:var(--text); display:none; align-items:center; gap:.5rem;">
+            <span>📞 <strong>Contact Phone:</strong></span> <a id="p-phone-link" href="#" style="color:var(--primary); font-weight:600; text-decoration:none;"></a>
+          </div>
         </div>
         <div class="profile-actions">
           <div class="rate-badge">
@@ -176,6 +179,14 @@
             e.preventDefault();
             showToast('This worker is pending admin verification and cannot be booked yet.', 'info');
           };
+        }
+
+        if (p.phone) {
+          const contactRow = document.getElementById('p-contact-row');
+          const phoneLink  = document.getElementById('p-phone-link');
+          phoneLink.textContent = p.phone;
+          phoneLink.href = `tel:${p.phone}`;
+          contactRow.style.display = 'flex';
         }
 
         // Stats

@@ -51,6 +51,10 @@
           <p id="greet-sub" style="margin-top:.25rem;"></p>
         </div>
 
+        <div id="missing-phone-alert" style="display:none; background:rgba(245,158,11,.12); border:1px solid rgba(245,158,11,.3); color:var(--text); padding:.75rem 1rem; border-radius:var(--radius-md);" class="mb-3">
+          📞 <strong>Contact Information Needed:</strong> Please set your phone number under <a href="#" onclick="showTab('profile', document.querySelectorAll('.sidebar-link')[3]); return false;" style="color:var(--primary); font-weight:600; text-decoration:underline;">Edit Profile</a> so homeowners can reach you when you accept jobs.
+        </div>
+
         <!-- Stat cards -->
         <div class="grid-4 mb-3" id="stat-cards">
           <div class="stat-card"><div><div class="stat-value" id="st-earnings">₵0</div><div class="stat-label">Total Earned</div></div></div>
@@ -234,10 +238,13 @@
 
           // Profile form
           document.getElementById('p-name').value = user.name;
-          document.getElementById('p-phone').value = providerData.phone || user.phone || '';
+          const phoneVal = providerData.phone || user.phone || '';
+          document.getElementById('p-phone').value = phoneVal;
           document.getElementById('p-bio').value = providerData.bio || '';
           document.getElementById('p-skills').value = providerData.skills || '';
           document.getElementById('p-rate').value = providerData.hourly_rate || '';
+
+          document.getElementById('missing-phone-alert').style.display = phoneVal ? 'none' : 'block';
 
           // Chart
           buildChart(bookings);
